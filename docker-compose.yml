@@ -25,11 +25,32 @@ services:
       retries: 20
       start_period: 30s
 
+  mongo:
+    image: mongo:7
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: boatdb
+      TZ: "${TZ:-Europe/Vienna}"
+    ports:
+      # Loopback only, like the relational database. Nothing outside this
+      # machine has any business reaching it.
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   backend:
     build: ./backend
     restart: always
     depends_on:
       db:
+        condition: service_healthy
+      mongo:
         condition: service_healthy
     ports:
       # Loopback only, so the app is reachable from this machine and nowhere
@@ -45,6 +66,8 @@ services:
       DB_NAME: boatdb
       DB_USER: user
       DB_PASSWORD: pass
+      MONGO_URI: mongodb://mongo:27017/
+      MONGO_DB: boatdb
       SECRET_KEY: dev
       # Containers default to UTC, which put every payment deadline two hours
       # behind the wall clock of the harbours this app serves. Rental.CreatedAt
@@ -57,3 +80,6 @@ services:
       UNSPLASH_ACCESS_KEY: "${UNSPLASH_ACCESS_KEY:-}"
     volumes:
       - ./backend/:/app
+
+volumes:
+  mongodata:

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="page-head">
+  <p class="eyebrow">MongoDB</p>
+  <h1>The same questions, asked of documents</h1>
+  <p>Both analytics reports run here against the document model instead of the
+     relational one. The answers should match what the SQL pages show.</p>
+</div>
+
+{% if not online %}
+<div class="content-section rise">
+  <div class="alert alert-danger mb-0">
+    <h4>MongoDB is not reachable</h4>
+    <p>The <code>mongo</code> service is part of <code>docker compose up</code>.
+       If you started only the backend, bring the rest up and reload.</p>
+  </div>
+</div>
+{% else %}
+
+<div class="content-section rise">
+  <div class="head-row">
+    <div>
+      <h2 class="h5 mb-1">Migration</h2>
+      <p class="text-muted mb-0">
+        Clears every collection and rebuilds it from MariaDB. One-way: the
+        relational database stays the system of record.
+      </p>
+    </div>
+    <form method="post" action="{{ url_for('nosql_migrate') }}"
+          onsubmit="return confirm('Replace all MongoDB collections with a fresh copy of the relational data?')">
+      {{ confirm_form.hidden_tag() }}
+      <button class="btn btn-success">Migrate to MongoDB</button>
+    </form>
+  </div>
+
+  <div class="stat-grid mt-3">
+    {% for name, count in counts.items() %}
+    <div class="stat">
+      <span class="figure">{{ count }}</span>
+      <span class="label">{{ name }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="mt-3 mb-0"><a href="{{ url_for('nosql_indexes') }}">Index statistics</a></p>
+</div>
+
+{% if not migrated %}
+<div class="content-section rise">
+  <div class="alert alert-info mb-0">
+    <h4>Nothing migrated yet</h4>
+    <p>Press <strong>Migrate to MongoDB</strong> above to copy the current
+       relational data into the collections.</p>
+  </div>
+</div>
+{% else %}
+
+<div class="content-section">
+  <div class="page-head">
+    <p class="eyebrow">Student 1 &middot; Golovanov</p>
+    <h2>Boats free in a harbour</h2>
+    <p>One aggregation over <code>offices</code>. No joins: the boats and their
+       rentals are inside the harbour document.</p>
+  </div>
+
+  <form method="get" class="row g-3 align-items-end mb-3">
+    <div class="col-md-4">
+      <label for="city" class="form-label">Harbour</label>
+      <select name="city" id="city" class="form-select">
+        {% for c in cities %}
+        <option value="{{ c }}" {{ 'selected' if c == current_city }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="start_date" class="form-label">From</label>
+      <input type="date" name="start_date" id="start_date" class="form-control"
+             value="{{ start_date.strftime('%Y-%m-%d') }}">
+    </div>
+    <div class="col-md-3">
+      <label for="end_date" class="form-label">To</label>
+      <input type="date" name="end_date" id="end_date" class="form-control"
+             value="{{ end_date.strftime('%Y-%m-%d') }}">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Run</button>
+    </div>
+  </form>
+
+  {% if boats %}
+  <p class="text-muted">{{ boats|length }} free in {{ current_city }}.</p>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr><th>Boat</th><th>Builder</th><th>Type</th><th>Guests</th>
+            <th>Length</th><th>Jacuzzi</th><th>Rate / day</th><th>Harbour</th></tr>
+      </thead>
+      <tbody>
+        {% for b in boats %}
+        <tr>
+          <td><span class="num">{{ b.boatId }}</span></td>
+          <td>{{ b.manufacturer }}</td>
+          <td>{{ b.type | capitalize }}</td>
+          <td><span class="num">{{ b.seats }}</span></td>
+          <td><span class="num">{{ "%.1f"|format(b.length) ~ " m" if b.length else "—" }}</span></td>
+          <td>
+            {% if b.jacuzzi is none %}<span class="text-muted">—</span>
+            {% elif b.jacuzzi %}<span class="has-extra">Yes</span>
+            {% else %}<span class="no-extra">No</span>{% endif %}
+          </td>
+          <td><span class="num">{{ b.dailyRate or "—" }}</span></td>
+          <td>{{ b.city }}, {{ b.country }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info mb-0">
+    Nothing free in {{ current_city }} over those dates.
+  </div>
+  {% endif %}
+</div>
+
+<div class="content-section">
+  <div class="page-head">
+    <p class="eyebrow">Student 2 &middot; Togizbayev</p>
+    <h2>Staff a manager supervises</h2>
+    <p>A single document read. The relational version joins Supervises, Staff,
+       Employee twice, Manager and Office.</p>
+  </div>
+
+  <form method="get" class="row g-3 align-items-end mb-3">
+    <input type="hidden" name="city" value="{{ current_city }}">
+    <div class="col-md-6">
+      <label for="manager_id" class="form-label">Manager</label>
+      <select name="manager_id" id="manager_id" class="form-select">
+        {% for mid, name in managers %}
+        <option value="{{ mid }}" {{ 'selected' if mid == manager_id }}>{{ name }} ({{ mid }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Run</button>
+    </div>
+  </form>
+
+  {% if report and report.staff %}
+  <p class="text-muted">
+    {{ report.manager }}{% if report.department %}, {{ report.department }}{% endif %}
+    at {{ report.office.city }}, {{ report.office.country }} supervises
+    {{ report.staff|length }} staff member{{ 's' if report.staff|length != 1 }}.
+  </p>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr><th>Staff</th><th>Name</th><th>Shift</th><th>On duty</th><th>Office</th></tr>
+      </thead>
+      <tbody>
+        {% for s in report.staff %}
+        <tr>
+          <td><span class="num">{{ s.employeeId }}</span></td>
+          <td>{{ s.name.first }} {{ s.name.last }}</td>
+          <td>{{ s.workShift or "—" }}</td>
+          <td>{% if s.isOnDuty %}<span class="has-extra">Yes</span>
+              {% else %}<span class="no-extra">No</span>{% endif %}</td>
+          <td>{{ s.office.city }}, {{ s.office.country }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info mb-0">
+    That manager supervises nobody yet. Assign staff on the
+    <a href="{{ url_for('supervision_assignments') }}">Supervision</a> page,
+    then migrate again.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

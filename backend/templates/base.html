@@ -47,6 +47,7 @@
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'list_rentals' }}" href="{{ url_for('list_rentals') }}">Rentals</a>
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'supervision_assignments' }}" href="{{ url_for('supervision_assignments') }}">Supervision</a>
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'maintenance_assignments' }}" href="{{ url_for('maintenance_assignments') }}">Maintenance</a>
+                <a class="nav-item nav-link {{ 'is-current' if request.endpoint in ['nosql_console', 'nosql_indexes'] }}" href="{{ url_for('nosql_console') }}">MongoDB</a>
               {% elif session.client %}
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'booking' }}" href="{{ url_for('booking') }}">Book a boat</a>
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'report' }}" href="{{ url_for('report') }}">My rentals</a>

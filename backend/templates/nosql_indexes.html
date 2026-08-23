@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="page-head">
+  <p class="eyebrow">MongoDB</p>
+  <h1>Index statistics</h1>
+  <p>Each report's query run twice through <code>explain("executionStats")</code>,
+     once with its index dropped and once with it in place.</p>
+</div>
+
+{% if not online %}
+<div class="content-section rise">
+  <div class="alert alert-danger mb-0">MongoDB is not reachable.</div>
+</div>
+{% else %}
+{% for collection, index_name, label, query, rows in measured %}
+<div class="content-section">
+  <div class="page-head">
+    <p class="eyebrow">{{ collection }} &middot; {{ index_name }}</p>
+    <h2>{{ label }}</h2>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr><th>Index</th><th>Docs examined</th><th>Keys examined</th>
+            <th>Returned</th><th>Plan</th><th>Index used</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ "in place" if loop.last else "dropped" }}</td>
+          <td><span class="num">{{ r.docsExamined }}</span></td>
+          <td><span class="num">{{ r.keysExamined }}</span></td>
+          <td><span class="num">{{ r.returned }}</span></td>
+          <td><span class="num">{{ r.stage or "—" }}</span></td>
+          <td><span class="num">{{ r.indexName or "—" }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+<p class="text-muted">Both indexes are back in place; dropping them is only
+   done for the measurement above.</p>
+{% endif %}
+{% endblock %}

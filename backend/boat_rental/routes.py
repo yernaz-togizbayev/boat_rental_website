@@ -25,7 +25,7 @@ from boat_rental.forms import BoatSelectionForm, BookingSearchForm, ManagerLogin
 from boat_rental.forms import (TEST_CARD_ACCEPTED, TEST_CARD_DECLINED, card_digits,
                                grouped_card)
 from boat_rental import app, db, format_money
-from boat_rental import assignments, images
+from boat_rental import assignments, images, nosql
 from boat_rental.assignments import (
     detach_boat_links,
     detach_manager_links,
@@ -1594,6 +1594,118 @@ def refund_rental(client_id, boat_id, rental_date):
 
     return redirect(url_for("list_rentals", city=request.form.get("city") or None))
 
+
+
+# =========================
+# NoSQL (MongoDB)
+# =========================
+
+@app.route("/manager/nosql")
+@manager_required
+def nosql_console():
+    """The MongoDB side: migrate, run both reports, and see the index stats.
+
+    Manager-only because it exposes the migration, which replaces every
+    collection. The two reports are the same questions the relational pages
+    answer, asked of the document model instead, so the answers can be
+    compared side by side.
+    """
+    if not nosql.available():
+        return render_template("nosql.html", online=False)
+
+    cities = served_cities()
+    city = request.args.get("city") or (cities[0] if cities else "")
+    start_date = parse_date_arg("start_date", date.today())
+    end_date = parse_date_arg("end_date", date.today() + timedelta(days=7))
+    if end_date <= start_date:
+        end_date = start_date + timedelta(days=7)
+
+    mongo = nosql.get_db()
+    counts = {name: mongo[name].estimated_document_count()
+              for name in nosql.COLLECTIONS}
+    migrated = any(counts.values())
+
+    boats = report = manager_id = None
+    managers = []
+    if migrated:
+        boats = nosql.available_boats(city, start_date, end_date)
+        managers = [(d["_id"], f"{d['name']['first']} {d['name']['last']}")
+                    for d in mongo.managers.find({}, {"name": 1}).sort("_id")]
+        manager_id = request.args.get("manager_id") or (managers[0][0] if managers else None)
+        report = nosql.supervised_staff(manager_id) if manager_id else None
+
+    return render_template(
+        "nosql.html",
+        online=True,
+        migrated=migrated,
+        counts=counts,
+        cities=cities,
+        current_city=city,
+        start_date=start_date,
+        end_date=end_date,
+        boats=boats,
+        managers=managers,
+        manager_id=manager_id,
+        report=report,
+        confirm_form=ConfirmDeleteForm(),
+    )
+
+
+@app.route("/manager/nosql/migrate", methods=["POST"])
+@manager_required
+def nosql_migrate():
+    """Clear the collections and rebuild them from MariaDB.
+
+    One-way by design: the relational database stays the system of record, and
+    nothing here writes back to it.
+    """
+    form = ConfirmDeleteForm()
+    if not form.validate_on_submit():
+        flash("Invalid migration request.", "error")
+        return redirect(url_for("nosql_console"))
+
+    try:
+        counts = nosql.migrate()
+    except Exception:
+        app.logger.exception("NoSQL migration failed")
+        flash("Migration failed. Is the mongo container running?", "error")
+    else:
+        flash("Migrated {offices} offices, {boats} boats, {rentals} rentals, "
+              "{managers} managers and {clients} clients into MongoDB."
+              .format(**counts), "success")
+    return redirect(url_for("nosql_console"))
+
+
+@app.route("/manager/nosql/indexes")
+@manager_required
+def nosql_indexes():
+    """The same two queries explained with and without their index."""
+    if not nosql.available():
+        return render_template("nosql_indexes.html", online=False)
+
+    cities = served_cities()
+    city = cities[0] if cities else ""
+    start = date.today()
+    end = start + timedelta(days=7)
+    pipeline = nosql.available_boats_pipeline(city, start, end)
+
+    mongo = nosql.get_db()
+    sample = mongo.managers.find_one({"supervisedStaff.0": {"$exists": True}})
+    staff_id = sample["supervisedStaff"][0]["employeeId"] if sample else None
+    reverse = {"supervisedStaff.employeeId": staff_id}
+
+    measured = [
+        ("offices", "city_idx", f"Boats free in {city}", pipeline,
+         [nosql.explain_stats("offices", pipeline, False),
+          nosql.explain_stats("offices", pipeline, True)]),
+        ("managers", "supervised_staff_idx",
+         f"Which manager supervises {staff_id}", reverse,
+         [nosql.explain_stats("managers", reverse, False),
+          nosql.explain_stats("managers", reverse, True)]),
+    ]
+    nosql.ensure_indexes()
+    return render_template("nosql_indexes.html", online=True, measured=measured,
+                           city=city, staff_id=staff_id)
 
 # =========================
 # Assignments (the two m:n relations)
