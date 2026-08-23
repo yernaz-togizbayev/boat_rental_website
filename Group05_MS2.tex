@@ -1,0 +1,630 @@
+\documentclass[a4paper, 11pt]{article}          % Paper and font size
+\usepackage[english]{babel}                     % Language setting
+
+% Set margins
+\usepackage[top=2.5cm,bottom=2.5cm,left=2cm,right=2cm,marginparwidth=1.75cm]{geometry}
+
+% Load useful packages
+\usepackage{graphicx}                           % Graphics
+\usepackage{amsmath}                            % Math
+\usepackage{xcolor}                             % Link color
+\definecolor{custom-blue}{RGB}{0,99,166}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, allcolors=custom-blue}
+\usepackage[default]{sourcesanspro}             % Load font
+\usepackage[T1]{fontenc}                        % Special characters
+\usepackage{fancyhdr}                           % Load header, footer package
+\usepackage{titlesec}
+
+\usepackage{lastpage}                           % Footer note
+
+\usepackage[table,xcdraw]{xcolor}               % Table requirements
+\usepackage{listings}                           % Code listings
+\usepackage{booktabs}                           % Nicer tables
+
+\definecolor{darkblue}{HTML}{365F91}
+\definecolor{blue}{HTML}{4F81BD}
+\definecolor{darkdarkblue}{HTML}{243F60}
+\definecolor{codebg}{HTML}{F4F6F8}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{lightgray},
+  breaklines=true,
+  columns=fullflexible,
+  showstringspaces=false,
+  captionpos=b,
+  xleftmargin=4pt,
+  framexleftmargin=4pt,
+}
+
+% Section Style
+\titleformat{\section}
+  {\normalfont\LARGE\upshape\color{darkblue}}{\thesection.}{1em}{}
+
+% Subsection Style
+\titleformat{\subsection}
+  {\normalfont\Large\upshape\color{blue}}{\thesubsection.}{1em}{}[{\color{black}\titlerule[0.2pt]}]
+
+% Subsubsection Style
+\titleformat{\subsubsection}
+  {\normalfont\large\upshape\color{blue}}{\thesubsubsection.}{1em}{}[{\color{black}\titlerule[0.2pt]}]
+
+% Paragraph Style
+\titleformat{\paragraph}
+{\normalfont\normalsize\upshape\color{blue}}{\theparagraph}{1em}{}[{\color{black}\titlerule[0.2pt]}]
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+% Subparagraph Style
+\titleformat{\subparagraph}
+{\normalfont\normalsize\upshape\itshape\color{darkdarkblue}}{\thesubparagraph}{1em}{}
+\titlespacing*{\subparagraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\pagestyle{myheadings}                          % Own header
+\pagestyle{fancy}                               % Own style
+\fancyhf{}                                      % Clear header, footer
+
+\setlength{\headheight}{30pt}                   % Set header hight
+\renewcommand{\headrulewidth}{0.5pt}            % Top line
+\renewcommand{\footrulewidth}{0.5pt}            % Bottom line
+
+\fancyhead[L]{\includegraphics[width=3cm]{guidelines/univienna-logo.eps}} % Header left
+\fancyhead[C]{}                                 % Header center
+\fancyhead[R]{University of Vienna}             % Header right
+\fancyfoot[C]{}                                 % Footer center
+\fancyfoot[R]{\thepage/\pageref{LastPage}}      % Footer right
+
+
+\newcommand{\studentone}{Student 1: Golovanov, Ilja, 12133820}
+\newcommand{\studenttwo}{Student 2: Togizbayev, Yernaz, 01429473}
+
+\setcounter{tocdepth}{2}
+
+%%% Begin document %%%
+\begin{document}
+
+\begin{figure}                                  % Include Logo
+\flushleft
+\includegraphics[width=0.4\textwidth]{guidelines/univienna-logo.eps}
+\end{figure}
+
+% Set title, author, date
+\title{052400-1 VU Information Management and \\Systems Engineering (2025S)\\[1em] { Milestone 2\\[1em]
+}}
+\author{
+\Large{Group 05}\\[1em]
+\studentone\ \\[1em]
+\studenttwo\ \\[1em]
+}
+
+\date{[23.08.2026], Vienna}
+
+\maketitle                                      % Include contents
+\newpage
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Milestone 1 - Recap and Revisions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Recap: ER-Diagram }
+
+The conceptual model is unchanged in structure since Milestone 1. Nine entities,
+one weak entity, one unary relationship, two m:n relationships and two IS-A
+hierarchies. The attributes listed in Section~\ref{sec:revisions} were added
+during implementation; no entity or relationship was added or removed.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{docs/ER-diagram/er_diagram.jpg}
+\caption{Boat Rental ER diagram (Chen notation)}
+\end{figure}
+
+\subsection{Revisions and Changes}
+\label{sec:revisions}
+
+No entities or relationships changed. Seven attributes were added, each of them
+because the implementation needed a fact the model did not record:
+
+\begin{itemize}
+  \item \textbf{Boat.DailyRate} \texttt{DECIMAL(10,2)}. A rental business
+        without a price is not one. Nullable, because a manager can add a boat
+        before deciding what to charge for it; an unpriced boat is hidden from
+        clients rather than offered at nothing.
+  \item \textbf{Rental.TotalAmount} \texttt{DECIMAL(10,2)}. What the client was
+        charged, frozen when the booking is made. Recomputing it from
+        \texttt{DailyRate} would let a later price change rewrite what somebody
+        already paid.
+  \item \textbf{Rental.StartTime} \texttt{TIME}. A charter starts at a handover
+        time, 09:00 by default. Kept separate from \texttt{RentalDate} rather
+        than widening it to a datetime, because the composite primary key, the
+        rental URLs and the overlap check all key off a date.
+  \item \textbf{Rental.CreatedAt} \texttt{DATETIME}. An unpaid booking is a hold
+        with a deadline, and the deadline is measured from when the booking was
+        made. Without it, a booking made a minute ago is indistinguishable from
+        one that lapsed overnight.
+  \item \textbf{Rental.CancelledAt} and \textbf{Rental.RefundedAt}
+        \texttt{DATETIME}. A paid charter that is called off keeps its row,
+        because that row is the only record the client was charged. These two
+        say when the refund became owed and when it was returned.
+  \item \textbf{Catamaran.HasJacuzzi} \texttt{BOOLEAN}. The MS1 model gave this
+        to yachts only, but catamarans have them too, and the booking page
+        states the answer either way.
+\end{itemize}
+
+The relational structure itself is otherwise as submitted: \texttt{Rental}
+remains the weak entity with the composite key
+\texttt{(ClientID, BoatID, RentalDate)}, \texttt{Manager.SupervisorID} remains
+the unary relationship, and \texttt{Supervises} and \texttt{Maintains} remain
+the two m:n tables.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Milestone 2}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Infrastructure}
+
+Three containers, defined in \texttt{docker-compose.yml} and started together:
+
+\begin{itemize}
+  \item \textbf{db} \textendash{} MariaDB 11.3. The relational database and the
+        system of record.
+  \item \textbf{mongo} \textendash{} MongoDB 7. The document database the data
+        is migrated into.
+  \item \textbf{backend} \textendash{} Python 3.11 with Flask, serving both the
+        pages and the application logic. It waits for both databases to report
+        healthy before starting.
+\end{itemize}
+
+All dependencies are installed during the image build from
+\texttt{backend/requirements.txt}; nothing has to be installed on the host.
+
+\paragraph{Running it}
+
+\begin{lstlisting}[language=bash]
+docker compose up --build
+\end{lstlisting}
+
+The application is then at \url{http://localhost:5000}. Both published ports are
+bound to \texttt{127.0.0.1} (the app on 5000, MariaDB on 3306, MongoDB on 27017),
+so nothing is reachable from outside the machine running it: the Flask
+development server would otherwise put a Python traceback in front of anyone on
+the same network, and the databases would answer with credentials that are in
+the compose file.
+
+To stop and reset the relational database completely:
+
+\begin{lstlisting}[language=bash]
+docker compose down -v
+\end{lstlisting}
+
+The \texttt{-v} is required to drop the volume, which is what makes the SQL init
+scripts run again on the next start.
+
+\paragraph{Signing in} There is no password system. \texttt{/login} lists every
+client and one click signs you in; \texttt{/manager/login} picks a manager from
+a dropdown. Both roles are needed to see the whole application: the booking
+flow is a client's, and the fleet, staff and MongoDB pages are a manager's.
+
+\subsection{RDBMS Implementation}
+\subsubsection{DB Setup / Data Import / Base Function of Web System}
+
+The tables are created by the SQL in \texttt{database/}, not by the application.
+MariaDB's entrypoint runs \texttt{Group05\_\allowbreak Createtable.sql} on
+first start,
+followed by \texttt{init.sql}, which sources the per-student insert scripts.
+The entrypoint does not recurse into subdirectories, which is why
+\texttt{init.sql} exists at the top level purely to \texttt{SOURCE} the files in
+\texttt{Student1/} and \texttt{Student2/}.
+
+The application layer mirrors that schema in
+\texttt{backend/boat\_rental/\allowbreak models.py} as SQLAlchemy models. The two are
+maintained by hand and have to agree: there is no migration tool, so a column
+added to one must be added to the other.
+
+\paragraph{Data import} \texttt{backend/boat\_rental/generator.py} fills the
+database with randomised data: 200 boats spread over every office, ten clients,
+employees split between managers and staff, and roughly 340 rentals. It is
+triggered by the \textbf{Generate demo data} button, which is on every page and
+does not require signing in, so a fresh checkout can be populated before anyone
+has logged in.
+
+Two details are deliberate. The generator replaces all boats, people and
+rentals, but it does \emph{not} delete the offices: a manager can open an office
+in any city, and clearing them would make the only restocking tool destroy every
+city anyone had added. It also runs as a single transaction, so a failure
+halfway through cannot leave the database emptied but not refilled.
+
+Boats are generated coherently rather than at random: length is drawn per boat
+type, and seats, engine power, weight, cabins and the daily rate are derived
+from it, so the fleet does not contain a seven-metre yacht that sleeps five.
+
+\paragraph{Base functionality} The web system covers client registration and
+sign-in, harbour and date search, booking with a simulated card payment,
+cancellation, and a client logbook. On the manager side it covers full CRUD for
+boats, offices and employees, the two m:n assignment relations, cancellation of
+any client's charter, and the MongoDB migration and reports described in
+Section~2.3.
+
+\section*{Student 1 (Ilja Golovanov)}
+\subsubsection{Implementation of the Use Case and the Analytics Report}
+
+\paragraph{Use case} A client books a boat. They choose a harbour and a date
+range; the system shows the boats in that harbour, and the client picks one and
+pays for the charter.
+
+The whole fleet of that harbour is listed rather than only what is free. Boats
+that are already booked or under maintenance are shown greyed out, labelled with
+the reason, and carry no radio button at all, so they cannot be selected or
+submitted. A page showing three boats reads as a company with three boats;
+showing the taken ones tells the client the harbour is worth trying on other
+dates.
+
+\paragraph{Analytics report} \emph{Which boats are free in a given harbour over
+a given date range, and how much of the fleet that represents.} It is the
+\textbf{Availability} page. Alongside the list it shows the fleet size and how
+many boats are not under maintenance, so the free count has something to be
+measured against.
+
+\paragraph{How the report changes} Booking a boat removes it from the report for
+any overlapping date range. The report and the booking page share one overlap
+predicate in the code, so what the report calls free and what the booking form
+accepts cannot disagree.
+
+\paragraph{Changes since MS1} Two conditions were added to the query as the
+implementation exposed them. A boat with no \texttt{DailyRate} is excluded, since
+it would otherwise reach the checkout with a total of nothing. A cancelled
+rental no longer counts as an overlap, since its row is kept as a payment record
+but the boat is free again. The search parameters were narrowed to harbour and
+dates; skipper and boat type were not implemented.
+
+\section*{Student 2 (Yernaz Togizbayev)}
+\setcounter{subsubsection}{1}
+\subsubsection{Implementation of the Use Case and the Analytics Report}
+
+\paragraph{Use case} A manager hires a staff member. The manager fills in the
+employee's personal and work details and chooses the role. The application
+writes the \texttt{Employee} row and then the matching \texttt{Staff} or
+\texttt{Manager} row, and the new staff member is placed under a manager's
+supervision through the \texttt{Supervises} relation.
+
+This exercises the IS-A hierarchy directly. Changing an employee's role later
+moves them between the \texttt{Staff} and \texttt{Manager} tables, deleting the
+old subclass row and writing the new one, rather than trying to update across
+them.
+
+\paragraph{Analytics report} \emph{Which staff a given manager supervises, with
+each one's shift, duty status and office.} It is the \textbf{Supervision} page.
+The SQL joins \texttt{Supervises} to \texttt{Staff}, to \texttt{Employee} twice
+(once for the staff member and once for the manager), to \texttt{Manager} and to
+\texttt{Office}.
+
+\paragraph{How the report changes} Hiring a staff member and assigning them to a
+manager adds a row to that manager's report. Measured on the running system:
+before the use case, manager \texttt{E8} supervised three staff; after hiring
+Lena Karras and assigning her, the same report returned four.
+
+\paragraph{Changes since MS1} The use case is as designed. One thing the
+implementation forced: removing an employee is not a single delete. Three
+foreign key families point at them \textendash{}
+\texttt{Manager.SupervisorID}, \texttt{Supervises} and \texttt{Maintains}
+\textendash{} and all three have to be detached first, including when a role
+change deletes the old subclass row. The MS1 design did not account for that.
+
+\pagebreak
+
+\subsection{NoSQL Implementation}
+
+\subsubsection{NoSQL Re-Design}
+
+The relational schema spreads the application over ten tables. Answering either
+use case there means joining four or five of them. The document model instead
+stores each use case's answer in the shape it is asked for, in three
+collections.
+
+\paragraph{offices} One document per harbour, with its boats embedded, and each
+boat's rentals embedded inside the boat. Student~1's report becomes a single
+aggregation over one collection.
+
+\begin{lstlisting}
+{
+  "_id": "O5",
+  "city": "Dubrovnik",
+  "country": "Croatia",
+  "street": "Obala Stjepana Radica, 2",
+  "zip": "20000",
+  "boats": [
+    {
+      "boatId": "B27",
+      "manufacturer": "Lagoon",
+      "type": "catamaran",
+      "length": 15.2,
+      "seats": 10,
+      "availabilityStatus": "Available",
+      "dailyRate": "1120.00",
+      "jacuzzi": true,
+      "rentals": [
+        { "clientId": "C3", "boatId": "B27",
+          "rentalDate": "2026-09-04", "rentalEndDate": "2026-09-09",
+          "paymentStatus": "PAID", "totalAmount": "5600.00" }
+      ]
+    }
+  ]
+}
+\end{lstlisting}
+
+\paragraph{managers} One document per manager, with the staff they supervise
+embedded. Student~2's report becomes a single document read.
+
+\begin{lstlisting}
+{
+  "_id": "E8",
+  "employeeId": "E8",
+  "name": { "first": "Jamie", "last": "Miller" },
+  "email": "jamie.miller@boat-rental.com",
+  "office": { "officeId": "O1", "city": "Mykonos", "country": "Greece" },
+  "department": "HR",
+  "managementLevel": "Senior",
+  "supervisorId": null,
+  "supervisedStaff": [
+    { "employeeId": "E2",
+      "name": { "first": "Avery", "last": "Smith" },
+      "email": "avery.smith@boat-rental.com",
+      "office": { "officeId": "O1", "city": "Mykonos", "country": "Greece" },
+      "workShift": "Evening", "isOnDuty": true }
+  ]
+}
+\end{lstlisting}
+
+\paragraph{clients} One document per client with their own rentals embedded,
+which is the client logbook.
+
+\paragraph{Keys, and what happened to them} Primary keys are kept, as
+\texttt{\_id}: \texttt{OfficeID}, \texttt{ManagerID} and \texttt{ClientID} are
+meaningful identifiers that the application already uses in URLs, so replacing
+them with generated ObjectIds would add a lookup and gain nothing. Foreign keys
+mostly disappear: \texttt{Boat.OfficeID} is implied by the boat being inside its
+office document, and \texttt{Supervises} stops being a table at all because the
+relationship is the array. The keys that survive are the ones crossing a
+document boundary. A rental keeps \texttt{clientId} and \texttt{boatId}, because
+it is embedded in two places and each copy needs to name the other side.
+
+The IS-A hierarchies are flattened. \texttt{Employee} is folded into each
+manager and staff sub-document, and the boat subtypes become a \texttt{type}
+field plus the attributes that subtype has. Nothing in the application asks for
+"an employee" or "a boat" without already knowing which kind it is, so the
+parent table earns nothing as a separate document.
+
+\paragraph{Changes compared to the individual MS1 designs} Student~1's MS1
+design embedded rentals in the client. Student~2's embedded supervised staff in
+the manager. Both survive, but neither on its own serves the other's use case,
+so the team design keeps both and adds the \texttt{offices} collection with
+boats embedded. That is what makes Student~1's report a single-collection query:
+his MS1 design would have needed a scan of every client's rentals to find out
+whether a boat was free.
+
+The cost is that a rental is stored twice, once under its boat and once under
+its client. That is the trade the document model asks for here: both reads
+become single-document, and the duplication costs nothing at runtime because
+only the migration writes to MongoDB.
+
+\subsubsection{NoSQL DB Setup and Data Migration}
+
+MongoDB 7 runs as the \texttt{mongo} service, with a named volume for its data
+and a healthcheck the backend waits on. The application talks to it with
+\texttt{pymongo}; all the MongoDB code is in
+\texttt{backend/boat\_rental/nosql.py}.
+
+The migration is started from the \textbf{MongoDB} page in the manager
+navigation, with the \textbf{Migrate to MongoDB} button. It clears all three
+collections before writing, so running it twice produces the same result rather
+than duplicating anything.
+
+It is a one-way copy. MariaDB stays the system of record and nothing is written
+back to it, and the application never writes to both databases at once: normal
+use writes only to MariaDB, and MongoDB is refreshed by re-running the
+migration. The data is read through the existing SQLAlchemy models rather than
+with fresh SQL, so there is a single definition of what a boat or a rental is.
+
+Rentals are grouped by boat and by client in one pass before the documents are
+assembled, so the migration reads each table once rather than querying per
+document. On the current demo data one run migrates:
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Collection / embedded & Documents \\
+\midrule
+offices    & 20 \\
+managers   & 4 \\
+clients    & 11 \\
+boats (embedded in offices)      & 200 \\
+rentals (embedded, twice each)   & 323 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Semantics are preserved rather than approximated. Money is written as a string,
+not a double: the columns are \texttt{DECIMAL(10,2)} and a float cannot hold
+cents exactly, so the same reasoning that chose the SQL type chooses the BSON
+one. Dates are ISO-8601 strings, which compare correctly as strings and so can
+be used directly in the range conditions of the availability query.
+
+\section*{Student 1 (Ilja Golovanov)}
+\subsubsection{NoSQL Use Case and Analytics Report}
+
+The use case and the report were reimplemented against MongoDB and are on the
+same \textbf{MongoDB} page. Selecting a harbour and a date range runs the
+aggregation below and lists the boats it returns.
+
+The results match the relational implementation. This was checked rather than
+assumed: for all 20 harbours in the demo data, over the same date range, the SQL
+query and the aggregation return exactly the same set of boat identifiers. The
+same holds after the use case is triggered: booking a boat in Dubrovnik for a
+window that previously had ten free boats leaves nine, and the booked boat is
+the one missing from the list.
+
+\subsubsection{NoSQL Analytics Report Statement}
+
+\begin{lstlisting}
+db.offices.aggregate([
+  { $match: { city: "Dubrovnik" } },
+  { $unwind: "$boats" },
+  { $match: { "boats.availabilityStatus": "Available",
+              "boats.dailyRate": { $ne: null } } },
+  { $addFields: {
+      clashes: { $filter: {
+        input: "$boats.rentals", as: "r",
+        cond: { $and: [
+          { $lt: [ "$$r.rentalDate", "2026-08-30" ] },
+          { $or: [ { $eq: [ "$$r.rentalEndDate", null ] },
+                   { $gt: [ "$$r.rentalEndDate", "2026-08-23" ] } ] },
+          { $ne: [ "$$r.paymentStatus", "CANCELLED" ] } ] } } } } },
+  { $match: { clashes: { $size: 0 } } },
+  { $project: { _id: 0, boatId: "$boats.boatId",
+                manufacturer: "$boats.manufacturer", type: "$boats.type",
+                seats: "$boats.seats", length: "$boats.length",
+                jacuzzi: "$boats.jacuzzi", dailyRate: "$boats.dailyRate",
+                city: "$city", country: "$country" } },
+  { $sort: { manufacturer: 1, boatId: 1 } }
+])
+\end{lstlisting}
+
+\paragraph{How the design affects it} The whole query stays inside one
+collection. The relational version joins \texttt{Boat} to \texttt{Office} and
+then tests a correlated \texttt{NOT EXISTS} against \texttt{Rental}; here the
+harbour is selected by an indexed equality, and the rentals that would clash are
+already inside the boat. The overlap test itself is unchanged in meaning, it has
+just moved from a subquery into a \texttt{\$filter} over an embedded array.
+
+\paragraph{Compromises} Two, both accepted knowingly. First, the same rental
+document exists under the boat and under the client, so a booking would have to
+be written twice. That is tolerable here because nothing but the migration
+writes to MongoDB, but it would be the first thing to revisit if the application
+started writing to the document database directly. Second, \texttt{\$unwind}
+expands one document per boat, so a harbour with a very large fleet does more
+work in memory than a row-per-boat table would. The mitigation is that the
+\texttt{\$match} on \texttt{city} runs first and is index-backed, so only the
+selected harbour is ever unwound. A harbour holding thousands of boats would
+push the document toward MongoDB's 16\,MB limit and would be the point to switch
+the boats to their own collection with a reference back to the office.
+
+\subsubsection{NoSQL Indexing}
+
+The report selects a harbour by name, so \texttt{offices.city} is indexed:
+
+\begin{lstlisting}
+db.offices.createIndex({ city: 1 }, { name: "city_idx" })
+\end{lstlisting}
+
+Measured with \texttt{explain("executionStats")} on the demo data, running the
+aggregation above with the index dropped and then in place:
+
+\begin{center}
+\begin{tabular}{lrrrl}
+\toprule
+Index & Docs examined & Keys examined & Returned & Plan \\
+\midrule
+dropped  & 20 & 0 & 1 & COLLSCAN \\
+in place & 1  & 1 & 1 & IXSCAN \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Without the index every harbour document is fetched and discarded; with it,
+exactly the one needed is read. The ratio is the number of harbours, so it grows
+as the company opens offices. The absolute times are both around a millisecond
+at this data size, which is the honest result: the index matters for the number
+of documents touched, not for wall-clock time on 20 documents.
+
+\section*{Student 2 (Yernaz Togizbayev)}
+\setcounter{subsubsection}{2}
+\subsubsection{NoSQL Use Case and Analytics Report}
+
+The use case writes to MariaDB, and the report was reimplemented against
+MongoDB on the \textbf{MongoDB} page: selecting a manager shows the staff that
+manager supervises, with shift, duty status and office.
+
+The results match the relational implementation, checked across all managers
+that supervise anyone: the same staff identifiers come back from both databases.
+The report also changes with the use case in the same way. Manager \texttt{E8}
+supervised three staff; after hiring Lena Karras, assigning her to \texttt{E8}
+and re-running the migration, the MongoDB report returned four, exactly as the
+SQL report did.
+
+\subsubsection{NoSQL Analytics Report Statement}
+
+\begin{lstlisting}
+db.managers.find({ _id: "E8" })
+\end{lstlisting}
+
+\paragraph{How the design affects it} This is the clearest gain of the two.
+The relational report joins five tables: \texttt{Supervises},
+\texttt{Staff}, \texttt{Employee} (twice), \texttt{Manager} and \texttt{Office}.
+Embedding the supervised staff inside the manager reduces it to fetching one
+document by its primary key, which MongoDB serves from the \texttt{\_id} index
+with no additional index required. Each staff sub-document already carries the
+name, shift, duty flag and office, so there is nothing left to look up
+afterwards.
+
+\paragraph{Compromises} Embedding means staff details are duplicated wherever a
+person appears, so a change of office or shift has to be written in more than
+one place. That is acceptable in this application because employee details
+change rarely and the report is read often, and because the migration rebuilds
+the documents wholesale rather than patching them.
+
+The real cost is directional. The design answers "who does this manager
+supervise" in one read, but the reverse question, "who supervises this staff
+member", has no natural home: without help it means scanning every manager
+document and searching its array. That is what the index in the next section
+exists for. A design that instead kept staff in their own collection with a
+\texttt{managerId} reference would make the reverse question trivial and the
+report a join, which is the wrong trade for this use case, since the report is
+what the application actually runs.
+
+\subsubsection{NoSQL Indexing}
+
+The report itself needs no new index, because it is a lookup on \texttt{\_id}.
+The reverse lookup does, so the array field is indexed. MongoDB indexes each
+element of an embedded array separately, which is what makes this work at all:
+
+\begin{lstlisting}
+db.managers.createIndex({ "supervisedStaff.employeeId": 1 },
+                        { name: "supervised_staff_idx" })
+\end{lstlisting}
+
+Measured with \texttt{explain("executionStats")} on the reverse lookup:
+
+\begin{lstlisting}
+db.managers.find({ "supervisedStaff.employeeId": "E2" })
+\end{lstlisting}
+
+\begin{center}
+\begin{tabular}{lrrrl}
+\toprule
+Index & Docs examined & Keys examined & Returned & Plan \\
+\midrule
+dropped  & 4 & 0 & 1 & COLLSCAN \\
+in place & 1 & 1 & 1 & IXSCAN + FETCH \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The collection scan reads every manager document and searches each
+\texttt{supervisedStaff} array; the index goes straight to the one that contains
+the staff member. With four managers in the demo data the saving is small in
+absolute terms, and it would be dishonest to present it as a speed-up at this
+size. What the numbers show is the shape of the change: the scan is proportional
+to the number of managers, the indexed lookup is not.
+
+Writing this section also caught a real defect. The index was first created on
+\texttt{supervisedStaff.staffId}, but the migration writes the field as
+\texttt{employeeId}, so the index matched nothing and
+\texttt{explain} reported \texttt{nReturned: 0} with the index apparently in
+use. The field name was corrected and the figures above are from the corrected
+version.
+
+\end{document}

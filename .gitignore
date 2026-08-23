@@ -223,3 +223,11 @@ compose.override.yml
 # ignore Docker Desktop / tooling files
 **/.docker/
 
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
