@@ -184,7 +184,7 @@
         })();
 
         // Type "1226" and get "12/26", and say so straight away if the month
-        // cannot exist. Cosmetic only -- validate_expiry re-checks whatever
+        // cannot exist. Cosmetic only: validate_expiry re-checks whatever
         // arrives, since the POST is untrusted.
         (function () {
           var expiry = document.querySelector('input[name="expiry"]');
@@ -200,8 +200,8 @@
             return digits;
           }
 
-          // '' means "nothing to complain about yet" -- a half-typed date is
-          // not an error, or the field turns red on the very first keystroke.
+          // '' means "nothing to complain about yet". A half-typed date is
+          // not an error, or the field turns red on the first keystroke.
           function expiryError(value, today) {
             var digits = value.replace(/\D/g, '');
             if (digits.length >= 2) {

@@ -60,8 +60,8 @@
             {% endif %}
           </td>
           <td>
-            {# Nothing to pay and nothing to cancel on a cancelled charter --
-               it is a record now, not a booking. #}
+            {# Nothing to pay and nothing to cancel on a cancelled charter.
+               It is a record now rather than a booking. #}
             {% if rental.is_cancelled %}
             <span class="text-muted">Cancelled</span>
             {% else %}

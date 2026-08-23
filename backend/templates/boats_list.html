@@ -36,8 +36,8 @@
             {% else %}
               <span class="badge bg-secondary">{{ boat.AvailabilityStatus }}</span>
             {% endif %}
-            {# A boat with no rate is hidden from clients, so say so here --
-               otherwise it looks available and silently never gets booked. #}
+            {# A boat with no rate is hidden from clients, so flag it here.
+               Otherwise it looks available and silently never gets booked. #}
             {% if boat.DailyRate is none %}
               <span class="badge bg-warning">Needs a rate</span>
             {% endif %}

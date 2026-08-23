@@ -5,8 +5,8 @@ executed without Docker:
 
     DATABASE_URL=sqlite:///smoke.db python smoke_test.py
 
-The MariaDB-only parts (generator.do_assignments, the SQL seed scripts) are not
-exercised here — those need `docker compose up`.
+The MariaDB-only parts, generator.do_assignments and the SQL seed scripts, are
+not covered here. Those need `docker compose up`.
 """
 
 import os
@@ -26,9 +26,9 @@ os.environ["WTF_CSRF_ENABLED"] = "0"
 os.environ["IMAGE_FETCH"] = "off"
 
 # email_validator is an implicit dependency: wtforms imports it only when an
-# Email() validator actually runs, so a host missing it presents as a broken app
-# -- /register 500s and every check after it fails -- rather than as a missing
-# package. requirements.txt pins it; fail loudly instead of misleadingly.
+# Email() validator actually runs. A host without it looks like a broken app
+# rather than a missing package: /register 500s and every check after it fails.
+# requirements.txt pins it, so fail loudly here instead of misleadingly later.
 try:
     import email_validator  # noqa: E402, F401
 except ImportError:
@@ -246,8 +246,8 @@ def main():
 
         # 0b. Unsplash attribution. Their guideline is a credit naming the
         #     photographer and linking to their profile, with referral
-        #     parameters on the link -- so the parameters are part of the
-        #     requirement, not decoration.
+        #     parameters on the link, so those parameters are part of the
+        #     requirement rather than decoration.
         with app.test_client() as c:
             body = c.get("/credits").get_data(as_text=True)
             check("the credits page is reachable without signing in",
@@ -301,9 +301,9 @@ def main():
               all(p["name"] != "No Handle" for p in images.photo_credits()))
 
         # 0c. The harbour picker on the booking page is a plain <select>, so
-        #     its order is exactly its option list, and it used to follow office
-        #     insertion order. Deduplication was never broken -- that query was
-        #     already distinct -- but the check below keeps it that way.
+        #     its order is exactly its option list. Deduplication was never
+        #     the problem, since that query was already distinct, but the check
+        #     below keeps it that way.
         #
         #     The seeded cities happen to be inserted alphabetically, so a sort
         #     check over them alone would pass whether or not anything sorts.
@@ -343,7 +343,7 @@ def main():
                   f"status {r.status_code}")
             check("a city with nothing free says so",
                   "Nothing free for these dates" in flat(body), body[:300])
-            # The maintenance boat is shown rather than hidden -- greyed, with
+            # The maintenance boat is shown rather than hidden: greyed, with
             # no radio, so it cannot be selected or submitted.
             check("the unavailable boat is still listed", "B9" in body)
             check("it is marked as under maintenance",
@@ -472,7 +472,7 @@ def main():
                   f"{booked.pay_by} vs ride {booked.starts_at}")
             check("an advance booking is not a late booking",
                   not booked.is_late_booking)
-            # No countdown on a hold measured in days -- a clock ticking down
+            # No countdown on a hold measured in days. A clock ticking down
             # from 23:59:59 would read as pressure that is not there.
             # Matches data-seconds, not "hold-timer": the script that drives the
             # clock is on every checkout and only the element is conditional.
@@ -510,8 +510,8 @@ def main():
                 check("the countdown is seeded within the grace period",
                       0 < left <= 15 * 60, f"{left}s")
 
-            # Inside its grace period the hold must survive a sweep -- the boat
-            # is being paid for right now.
+            # Inside its grace period the hold must survive a sweep. Someone
+            # is paying for that boat right now.
             search(c, "Dubrovnik", start=today, end=today + timedelta(days=2))
             check("a hold inside its grace period survives the sweep",
                   Rental.query.filter_by(BoatID="B4", RentalDate=today).count() == 1)
@@ -681,9 +681,9 @@ def main():
             check("analytics no longer defaults to the stale 2025 window",
                   "2025-07-01" not in r2.get_data(as_text=True))
 
-            # Opening the page picks no harbour. It used to land on Dubrovnik,
-            # reporting figures for a city the reader had not chosen -- and
-            # quietly favouring one harbour over the rest of the fleet.
+            # Opening the page picks no harbour, so it cannot report figures
+            # for a city the reader never chose or quietly favour one harbour
+            # over the rest of the fleet.
             opening = r2.get_data(as_text=True)
             check("no harbour is chosen on arrival",
                   "Available Boats in" not in flat(opening), opening[:400])
@@ -717,8 +717,8 @@ def main():
                   offered == ["Dubrovnik", "Mykonos", "Nice"], f"{offered}")
 
             # The dropdown the script actually opens is our own list, and it
-            # has to carry the same cities as the datalist fallback -- two
-            # sources of the same options is two chances to drift.
+            # has to carry the same cities as the datalist fallback. Two
+            # sources for the same options is two chances to drift.
             drop = re.search(r'<ul class="combo-list".*?</ul>', body, re.S)
             in_dropdown = re.findall(r'data-value="([^"]+)"', drop.group(0)) if drop else []
             check("the dropdown offers the same cities as the fallback",
@@ -732,7 +732,7 @@ def main():
             check("availability has a jacuzzi column", "<th>Jacuzzi</th>" in body,
                   body[:300])
             # The same start/end pair as the booking search, so it gets the
-            # same auto-advance -- from the one shared partial, not a copy.
+            # same auto-advance, from the shared partial rather than a copy.
             check("availability advances the end date with the start",
                   "drags the end date to the day after" in body, body[:300])
             check("availability marks the yacht that has one",
@@ -743,7 +743,7 @@ def main():
             check("a boat that cannot have one is neither a yes nor a no",
                   body.count('no-extra">No') == 1, body[:300])
 
-            # Mykonos holds B3, a catamaran without one -- so the column is
+            # Mykonos holds B3, a catamaran without one, so the column is
             # answering for catamarans and not only for yachts.
             body = c.get(f"/analytics?city=Mykonos&start_date={quiet}"
                          f"&end_date={quiet + timedelta(days=2)}").get_data(as_text=True)
@@ -966,8 +966,8 @@ def main():
                   body[:300])
 
         # 13b. Stocking an empty harbour must add boats and delete nothing.
-        #      The only tool for this used to be /generate-data, which wipes
-        #      every table -- that is how a database full of offices was lost.
+        #      The alternative is /generate-data, which wipes every table.
+        #      That is how a database full of offices was lost once.
         with app.test_client() as c:
             as_manager(c, "M1")
             c.post("/manager/offices/new", data={
@@ -1111,8 +1111,9 @@ def main():
                   Rental.query.filter_by(BoatID="B4", ClientID="C1").count() == 0)
 
         # 14b. Cancelling a *paid* charter must not delete it. The row is the
-        #      only record the client was charged, so it is kept as CANCELLED
-        #      -- but it must stop holding the boat, and nothing may sweep it.
+        #      only record the client was charged, so it is kept as
+        #      CANCELLED. It must stop holding the boat, and nothing may
+        #      sweep it away.
         with app.test_client() as c:
             as_client(c, "C1")
             paid_start = END + timedelta(days=320)
@@ -1194,8 +1195,8 @@ def main():
                   Rental.query.filter_by(ClientID="C2", BoatID="B1",
                                          RentalDate=c2_start).count() == 1)
 
-            # Booking refuses past start dates, so this row can only be made
-            # directly -- but the guard still has to hold.
+            # Booking refuses past start dates, so this row can only be
+            # written directly. The guard still has to hold.
             past = date.today() - timedelta(days=2)
             db.session.add(Rental(ClientID="C1", BoatID="B4", RentalDate=past,
                                   RentalEndDate=date.today() + timedelta(days=1),
@@ -1222,7 +1223,7 @@ def main():
                   Rental.query.filter_by(BoatID="B4", RentalDate=past).count() == 1)
 
         # 13c. The office can call off anyone's charter, including one already
-        #      under way -- both things the client route deliberately refuses.
+        #      under way, both of which the client route refuses.
         with app.test_client() as c:
             as_manager(c, "M1")
             body = c.get("/manager/rentals").get_data(as_text=True)
@@ -1298,7 +1299,7 @@ def main():
             check("recording a refund does not delete the record",
                   refunded is not None and refunded.is_cancelled)
             check("the refund is no longer outstanding", refunded.refund_due is False)
-            # Recording the refund must not touch what was charged -- that
+            # Recording the refund must not touch what was charged. That
             # figure is the whole reason the row was kept.
             check("the amount charged is untouched by the refund",
                   refunded.TotalAmount == charter_total(Decimal("770.00"), 8),
@@ -1440,7 +1441,7 @@ def main():
             check("login page links to registration", "Create an account" in body)
 
         # 15. generate-data is open to anonymous visitors and repeatable, and
-        #     it must never take the harbours with it -- the whole reason it is
+        #     it must never take the harbours with it. That is what makes it
         #     safe to leave the button on the page.
         with app.test_client() as c:
             cities_before = {c_ for (c_,) in Office.query.with_entities(Office.City)}

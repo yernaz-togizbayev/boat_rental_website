@@ -1,3 +1,13 @@
+"""Raw SQL for the two m:n tables, Supervises and Maintains.
+
+Neither table has a SQLAlchemy model, and neither should get one. seed() in
+smoke_test.py calls db.create_all() and then creates both by hand, so mapping
+them would make that hand-written DDL collide. generate_data() also counts on
+clearing them with a plain DELETE before the rows they point at.
+
+Nothing here commits. The caller owns the transaction.
+"""
+
 from sqlalchemy import text
 
 from boat_rental import db
@@ -26,8 +36,11 @@ def add_supervises(manager_id, staff_id):
 
 
 def remove_supervises(manager_id, staff_id):
-    """Delete one link. Returns the row count so the caller can tell a real
-    removal from a stale button press."""
+    """Delete one link, returning the row count.
+
+    The count lets the caller tell a real removal from a stale button press on
+    a page someone left open.
+    """
     return db.session.execute(
         text("DELETE FROM `Supervises` WHERE `ManagerID` = :m AND `StaffID` = :s"),
         {"m": manager_id, "s": staff_id},
@@ -66,7 +79,13 @@ def remove_maintains(staff_id, boat_id):
 
 
 def detach_manager_links(emp_id):
-    """Clear the references that block removing a Manager row."""
+    """Clear the references that block removing a Manager row.
+
+    Three of them, not one: other managers pointing at this one through
+    Manager.SupervisorID, and its rows in Supervises. Call this before
+    deleting the Manager, including when edit_employee() switches someone to
+    staff and drops the old subclass row.
+    """
     db.session.execute(
         text("UPDATE `Manager` SET `SupervisorID` = NULL WHERE `SupervisorID` = :id"),
         {"id": emp_id},

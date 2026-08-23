@@ -3,7 +3,7 @@
    reason to behave differently and every reason to drift if copied. #}
 <script>
   // Picking a start date drags the end date to the day after it. Convenience
-  // only -- the server still decides: validate_end_after_start on the booking
+  // only. The server still decides: validate_end_after_start on the booking
   // form, and the end-before-start guard in analytics().
   (function () {
     var start = document.querySelector('input[name="start_date"]');

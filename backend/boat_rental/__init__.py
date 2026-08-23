@@ -5,15 +5,15 @@ from flask_wtf.csrf import generate_csrf
 
 import os
 
-# Load the repo-root .env so running python outside Docker sees the same
-# settings Compose injects. Existing env vars win, so the container -- where
-# there is no .env -- is unaffected. Guarded because the app must still start
-# if the image predates python-dotenv landing in requirements.txt.
+# Load the repo-root .env so running Python outside Docker picks up the same
+# settings Compose injects. Existing env vars win, so the container (which has
+# no .env file) is unaffected. The try/except is there so the app still starts
+# on an image built before python-dotenv was added to requirements.txt.
 try:
     from dotenv import find_dotenv, load_dotenv
 
     load_dotenv(find_dotenv())
-except ImportError:  # pragma: no cover - only before the next image rebuild
+except ImportError:  # pragma: no cover
     pass
 
 
@@ -30,12 +30,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL") or (
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Session cookie hardening. HttpOnly is Flask's default and is set here anyway
-# so it is visible rather than assumed; SameSite=Lax stops the cookie riding
-# along on a cross-site request, which is a second lock behind CSRFProtect.
-# Secure is off by default because the app is served over plain HTTP on
-# localhost and the cookie would simply never be sent -- set SESSION_COOKIE_
-# SECURE=1 behind TLS.
+# Session cookie flags. HttpOnly is already Flask's default; spelling it out
+# keeps all three in one place. SameSite=Lax keeps the cookie off cross-site
+# requests, backing up CSRFProtect. Secure stays off by default because we
+# serve plain HTTP on localhost, where the browser would never send the cookie
+# at all. Set SESSION_COOKIE_SECURE=1 when running behind TLS.
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.getenv("SESSION_COOKIE_SECURE", "") in ("1", "true", "True")
@@ -52,11 +51,11 @@ def inject_csrf():
 
 @app.context_processor
 def inject_unsplash():
-    """The attribution link the footer needs, so every page carries it.
+    """Unsplash attribution link, used by the footer on every page.
 
-    Imported inside the function rather than at the top: images.py is a
-    sibling of this module, and importing it up there closes the same
-    circular loop that keeps `routes` at the bottom of the file.
+    The import sits inside the function because images.py is a sibling
+    module, and importing it at the top would recreate the circular import
+    that keeps `routes` pinned to the bottom of this file.
     """
     from boat_rental.images import UNSPLASH_HOME
     return dict(unsplash_home=UNSPLASH_HOME)
@@ -66,10 +65,9 @@ def inject_unsplash():
 def format_money(amount):
     """Euro with thousands separators, or an em dash when there is no price.
 
-    A filter rather than repeated formatting in five templates -- a boat with
-    no DailyRate is a real state (the column is nullable and a manager can
-    leave it blank), and every one of those templates has to render it the
-    same way.
+    DailyRate is nullable and a manager can leave it blank, so "no price" is a
+    real state rather than an error. Five templates render money, and this is
+    how they all agree on what a missing one looks like.
     """
     if amount is None:
         return "—"

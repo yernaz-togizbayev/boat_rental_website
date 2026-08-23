@@ -14,21 +14,22 @@
         <label for="city" class="form-label">Harbour</label>
         {# Typable *and* pickable. A manager can open a harbour in any city, so
            this list grows without bound and scrolling it for one name is
-           slower than typing three letters -- but the whole list still has to
-           be browsable by someone who does not know what we serve.
+           slower than typing three letters. The whole list still has to be
+           browsable by someone who does not know what we serve.
 
-           A bare datalist could not do both: the field is pre-filled with the
-           current city, so the browser filtered its own suggestions down to
-           that one value and clicking the field appeared to do nothing. The
-           list below is ours, so opening it always offers everything.
+           A bare datalist cannot do both. It filters its own suggestions
+           against whatever is in the field, and the field is pre-filled with
+           the current harbour, so clicking it would offer that one value and
+           look broken. The list below is ours, so opening it always shows
+           everything.
 
-           The datalist stays as the no-JS fallback; the script removes it when
-           it takes over, or a browser would show two dropdowns at once. #}
+           The datalist stays as the no-JS fallback. The script drops it on
+           takeover, or the browser shows two dropdowns at once. #}
         <div class="combo" id="harbour-combo">
           <input list="harbours" name="city" id="city" class="form-control combo-input"
-                 {# `or ''` because no harbour chosen is None, and Jinja prints
-                    that as the word "None" -- which would sit in the box and
-                    hide the placeholder. #}
+                 {# `or ''` because "no harbour chosen" is None, and Jinja
+                    renders that as the word "None", which then sits in the
+                    box and hides the placeholder. #}
                  value="{{ current_filter or '' }}" autocomplete="off"
                  placeholder="Type or pick a harbour"
                  role="combobox" aria-expanded="false" aria-autocomplete="list"
@@ -38,10 +39,10 @@
           <datalist id="harbours">
             {% for city in cities %}<option value="{{ city }}"></option>{% endfor %}
           </datalist>
-          {# The option shows the country, data-value stays the bare city --
-             that is what goes into the field and what the filter keys off.
+          {# The option shows the country; data-value stays the bare city,
+             which is what goes into the field and what the filter keys off.
              The script matches on the visible text, so typing "Croatia" finds
-             Dubrovnik as well as typing "Dubro" does. #}
+             Dubrovnik just as "Dubro" does. #}
           <ul class="combo-list" id="harbour-list" role="listbox" hidden>
             {% for city, country in harbours %}
             <li class="combo-option" role="option" data-value="{{ city }}">{{ city }}, {{ country }}</li>
@@ -77,9 +78,8 @@
     <span class="figure">{{ available_count }}</span>
     <span class="label">Not in maintenance</span>
   </div>
-  {# The last two are about one harbour, so they only appear once there is
-     one. Shown as "0 free in —" before a choice is made, they would read as a
-     fleet with nothing available rather than as a question not yet asked. #}
+  {# These two are about one named harbour, so they wait for one. A zero here
+     before any choice is made would read as a fleet with nothing free. #}
   {% if current_filter %}
   <div class="stat is-accent">
     <span class="figure">{{ boats|length }}</span>
@@ -92,8 +92,8 @@
   {% endif %}
 </div>
 
-{# Nothing is reported until a harbour is named. The page opens as a question
-   rather than as a report about a city the reader never asked for. #}
+{# Nothing is reported until a harbour is named, so the page opens as a
+   question instead of a report on a city nobody asked about. #}
 {% if not current_filter %}
 <div class="content-section rise">
   <div class="alert alert-info mb-0">
@@ -121,9 +121,9 @@
     <table class="table table-striped">
       <thead>
         <tr>
-          {# Guests, length and price: what someone choosing a boat weighs.
-             Weight and horsepower were in the table because the columns
-             existed, not because a renter can act on them. #}
+          {# Guests, length and price are what someone choosing a boat
+             actually weighs up. Weight and horsepower are in the database
+             but mean nothing to a renter. #}
           <th>Boat</th>
           <th>Builder</th>
           <th>Type</th>
@@ -175,7 +175,7 @@
 <script>
   // Harbour combobox: click the field (or the chevron) for the whole list,
   // type to narrow it. Matching is substring, not prefix, so "brov" finds
-  // Dubrovnik -- which is the half a native datalist does not do.
+  // Dubrovnik, which is the half a native datalist cannot do.
   (function () {
     var combo = document.getElementById('harbour-combo');
     var input = document.getElementById('city');

@@ -1,3 +1,18 @@
+"""Every route in the app, client and manager alike.
+
+Two rules worth knowing before editing:
+
+Client routes take ClientID from the session, never from the URL. That is what
+makes it impossible to address someone else's rental, rather than a check that
+could be forgotten. Manager routes take all three key components, because
+acting on another client's booking is the point.
+
+Availability is decided in one place. rental_overlap_filter() answers "do these
+dates clash" for the booking page, the availability report and the re-check
+inside attempt_booking(), so what looks bookable and what the form accepts
+cannot drift apart.
+"""
+
 from flask import flash, redirect, request, render_template, session, url_for
 from datetime import datetime, date, timedelta
 from sqlalchemy import and_, func, select, or_
@@ -60,9 +75,9 @@ def sign_in(role, payload):
 def sign_out():
     """Drop both role keys, leaving the rest of the session intact.
 
-    Deliberately not session.clear(): signing out is about the role, and
-    clearing wholesale takes any other session state with it -- including the
-    flash queue, so the "Logged out" message itself would vanish.
+    Not session.clear(): signing out is about the role, and clearing the lot
+    takes the rest of the session with it, including the flash queue. The
+    "Logged out" message would disappear along with everything else.
     """
     for key in EXCLUSIVE_SESSION_KEYS:
         session.pop(key, None)
@@ -105,12 +120,11 @@ def register_client():
     anyway. Without it a new user has to find their own name in an unsorted
     list that grows with every registration.
 
-    Arriving already signed in signs you out rather than turning you away. The
-    link lives on /login, which is the identity picker -- being there at all
-    means changing who you are -- so bouncing to the home page did nothing and
-    explained nothing. Nothing is lost either: the account still exists and is
-    one click away on /login. Said out loud, because a session ending quietly
-    is worse than one ending.
+    Arriving here already signed in ends that session instead of turning you
+    away. The link lives on /login, the identity picker, so being there at all
+    means you are changing who you are. Nothing is lost: the old account still
+    exists, one click away on the page you came from. The flash says so,
+    because a session ending quietly is worse than one ending.
     """
     if "client" in session:
         who = session["client"].get("FirstName", "that account")
@@ -133,8 +147,8 @@ def register_client():
                 Email=form.email.data,
                 MobileNumber=form.mobile.data or None,
                 # CaptainLicenseNumber is UNIQUE, and the DB allows many NULLs
-                # but not many empty strings -- so a blank field must become
-                # None or the second licence-less signup fails.
+                # but not many empty strings, so a blank field has to become
+                # None or the second licence-less signup collides.
                 CaptainLicenseNumber=(form.captain_license.data or "").strip() or None,
             )
             db.session.add(client)
@@ -283,10 +297,9 @@ def report():
     rentals = (
         db.session.query(Rental)
         .filter(Rental.ClientID == session.get("client").get("ClientID"))
-        # The logbook shows each charter's harbour, which lives two hops away
-        # on Office. Eager-loaded so a long logbook is one query, not one per
-        # row -- and left as an outer join, so a rental still lists even if its
-        # boat or office has gone missing.
+        # The harbour is two hops away on Office. Eager-loaded so a long
+        # logbook costs one query instead of one per row, and left as an outer
+        # join so a rental still appears even if its boat or office has gone.
         .options(joinedload(Rental.boat).joinedload(Boat.office))
         .order_by(Rental.RentalDate.desc())
         .all()
@@ -303,10 +316,10 @@ def report():
 def cancel_rental(boat_id, rental_date):
     """Cancel one of the signed-in client's own future rentals.
 
-    The composite PK is (ClientID, BoatID, RentalDate), but only two of the
-    three components travel in the URL -- ClientID is read from the session.
-    That means a client cannot address another client's row at all, so there
-    is no ownership check here to get wrong.
+    The composite PK is (ClientID, BoatID, RentalDate), but only two of those
+    three are in the URL. ClientID comes from the session, so a client cannot
+    address another client's row at all and there is no ownership check here
+    to get wrong.
     """
     if "client" not in session:
         return redirect(url_for("login"))
@@ -447,15 +460,13 @@ def analytics():
     harbours = served_harbours()
     cities = [city for city, _country in harbours]
 
-    # No harbour until one is asked for. Defaulting to a city meant the page
-    # opened on figures for somewhere nobody had chosen, which reads as a
-    # report rather than as a prompt -- and quietly favoured one harbour over
-    # the rest of the fleet.
+    # No harbour until one is asked for, so the page opens as a question
+    # rather than as a report on a city the reader never chose.
     #
-    # The field is a datalist, so it can be typed into as well as picked from,
-    # and an unrecognised city has to be said out loud: "0 free in Atlantis"
-    # would read as a fleet problem rather than a typo. Matched
-    # case-insensitively, because a field you type into invites "dubrovnik".
+    # The field can be typed into as well as picked from, so an unrecognised
+    # city can arrive and has to be named as a typo. "0 free in Atlantis"
+    # would read as a fleet problem instead. Matched case-insensitively,
+    # because a field you type into invites "dubrovnik".
     requested = (request.args.get("city") or "").strip()
     by_fold = {city.casefold(): city for city in cities}
     filtered_city = by_fold.get(requested.casefold())
@@ -513,12 +524,12 @@ def credits():
 
 @app.route("/generate-data", methods=["POST"])
 def reset_data():
-    """Refill the demo data. Offered to anonymous visitors, and repeatable.
+    """Refill the demo data. Open to anonymous visitors, and repeatable.
 
-    It used to hide itself after one use per browser session, which meant the
-    only way back was a fresh session -- and pressing it then destroyed every
-    city anyone had added. generate_data() now keeps the offices, so running it
-    again is a refill rather than a loss and the button can simply stay.
+    Not role-guarded on purpose: a fresh checkout has to be fillable before
+    anyone can sign in. It is safe to press twice because generate_data()
+    keeps the offices, so a second run refills the fleet rather than costing
+    you every city a manager has added.
     """
     try:
         generate_data()
@@ -565,12 +576,12 @@ def attempt_booking(params):
 
     client_id = session["client"]["ClientID"]
 
-    # A cancelled charter keeps its row, and the primary key is
-    # (ClientID, BoatID, RentalDate) -- so this same client rebooking this same
-    # boat for this same start date collides with it. Reuse the row instead of
-    # refusing the booking: every field is rewritten, CreatedAt included, so
-    # what comes out is the new booking and not a revived old one. Only a
-    # CANCELLED row may be taken over; a live one still means "already booked".
+    # A cancelled charter keeps its row, and the primary key is (ClientID,
+    # BoatID, RentalDate), so the same client rebooking the same boat for the
+    # same start date collides with it. Take the row over rather than refuse
+    # the booking. Every field is rewritten, CreatedAt included, so the result
+    # is a new booking and not a revived old one. Only a CANCELLED row can be
+    # reused; a live one still means "already booked".
     previous = Rental.query.filter_by(
         ClientID=client_id, BoatID=boat_id, RentalDate=params["start_date"]
     ).first()
@@ -586,10 +597,10 @@ def attempt_booking(params):
         rental.PaymentStatus = PAYMENT_UNPAID
         rental.TotalAmount = total
         rental.StartTime = DEFAULT_START_TIME
-        # Set explicitly rather than left to the column default: the payment
-        # deadline is measured from it, so it is part of the booking, not
-        # bookkeeping -- and on a reused row there is no default to fall back
-        # on, only the old booking's timestamp.
+        # Set explicitly rather than left to the column default. The payment
+        # deadline is measured from it, so it is part of the booking rather
+        # than bookkeeping, and a reused row has no default to fall back on:
+        # it would keep the old booking's timestamp.
         rental.CreatedAt = datetime.now()
         if previous is None:
             db.session.add(rental)
@@ -662,11 +673,12 @@ def rental_overlap_filter(start_date, end_date):
     return and_(
         Rental.RentalDate < end_date,
         or_(Rental.RentalEndDate.is_(None), Rental.RentalEndDate > start_date),
-        # A cancelled charter keeps its row as the record of a payment, but it
-        # holds nothing -- without this the boat would be unbookable forever.
-        # Spelled with an explicit NULL branch because PaymentStatus is
-        # nullable and `<> 'CANCELLED'` is NULL, not true, for a NULL status:
-        # every rental with no status would silently stop blocking its boat.
+        # A cancelled charter keeps its row as the record of a payment but
+        # holds nothing, and without this the boat stays blocked forever.
+        # The NULL branch is spelled out because PaymentStatus is nullable:
+        # for a NULL status `<> 'CANCELLED'` evaluates to NULL rather than
+        # true, so every rental with no status would quietly stop blocking
+        # its boat.
         or_(Rental.PaymentStatus.is_(None),
             Rental.PaymentStatus != PAYMENT_CANCELLED),
     )
@@ -675,23 +687,23 @@ def rental_overlap_filter(start_date, end_date):
 def release_rental(rental):
     """Call off a booking, keeping the row only if money changed hands.
 
-    An UNPAID booking is a hold: nothing was taken, so the row goes and the
-    boat is simply free again. A PAID one is the only record that the client
-    was charged, and deleting it would erase that -- the same reason
-    TotalAmount is frozen at booking rather than recomputed from DailyRate.
-    It is marked CANCELLED instead, and stops holding the boat because
-    rental_overlap_filter() ignores that status.
+    An UNPAID booking is only a hold. Nothing was taken, so the row goes and
+    the boat is free again. A PAID one is the only record that the client was
+    charged, and deleting it erases that, for the same reason TotalAmount is
+    frozen at booking instead of recomputed from DailyRate. It gets marked
+    CANCELLED and stops holding the boat, because rental_overlap_filter()
+    skips that status.
 
-    Shared by both cancellation paths on purpose. The two differ over *what
-    may be cancelled* -- that is the feature -- but what cancelling *does* to
-    a paid charter must not depend on who clicked. Does not commit.
+    Both cancellation paths call this. They differ over what may be cancelled,
+    which is intended, but what cancelling does to a paid charter should not
+    depend on who clicked. Does not commit.
 
     Returns True if the row was kept as a record.
     """
     if rental.PaymentStatus == PAYMENT_PAID:
         rental.PaymentStatus = PAYMENT_CANCELLED
-        # Stamped here rather than inferred later: this is the moment the
-        # refund became owed, and nothing else in the row records it.
+        # Stamped here rather than worked out later. This is the moment the
+        # refund became owed and nothing else in the row records it.
         rental.CancelledAt = datetime.now()
         return True
     db.session.delete(rental)
@@ -727,19 +739,19 @@ def rental_conflicts(boat_id, start_date, end_date):
 def release_expired_holds():
     """Delete unpaid bookings whose payment deadline has passed.
 
-    An unpaid booking is a hold, not a charter: it keeps the boat only until
-    the day before the trip. Past that it is released, which is why a same-day
-    booking must be paid there and then -- its deadline is already gone.
+    An unpaid booking is a hold rather than a charter, and it keeps the boat
+    only until the day before the trip. That is why a same-day booking has to
+    be paid there and then: its deadline has already gone.
 
-    Run from get_available_boats() rather than a scheduler, because this app
-    has no way to run one: availability is read on every search, so that is
-    where an honest answer is needed. PAID rentals are never touched.
+    This runs from get_available_boats() instead of a scheduler, because the
+    app has nowhere to run one. Availability is read on every search, which is
+    the moment the answer has to be honest. PAID rentals are never touched.
 
-    Scoped to holds that still block a boat -- starting today, or already under
-    way and not yet finished. An unpaid charter whose window is entirely in the
-    past is history, not a hold: it blocks nothing, and deleting it would
-    rewrite the record, which is precisely what cancel_rental_as_manager()
-    refuses to do for finished charters.
+    Scoped to holds that still block a boat: starting today, or under way and
+    not yet finished. An unpaid charter whose window is entirely in the past
+    blocks nothing, so it is history rather than a hold, and deleting it would
+    rewrite the record the same way cancel_rental_as_manager() refuses to for
+    finished charters.
     """
     today = date.today()
     now = datetime.now()
@@ -783,8 +795,8 @@ def get_boats_with_status(city, start_date, end_date):
 
     Bookability is decided by the same rental_overlap_filter() that
     get_available_boats() uses, so the greyed-out set and the bookable set
-    cannot disagree. Unpriced boats are left out entirely -- an incomplete
-    record is not a boat a client should see at all.
+    cannot disagree. Unpriced boats are left out entirely, since an
+    incomplete record is not something a client should be choosing from.
     """
     release_expired_holds()
 
@@ -817,12 +829,11 @@ def get_boats_with_status(city, start_date, end_date):
 def get_available_boats(city, start_date, end_date):
     """Boats in this city that can actually be chartered for these dates.
 
-    DailyRate is nullable and a manager may leave it blank, but a boat with no
-    price is not ready to rent: it used to reach checkout with a NULL total,
-    where the demo card cheerfully "paid" nothing at all. Filtering here rather
-    than at the template covers all three callers -- the booking page, the
-    availability page, and attempt_booking()'s re-derivation -- so an unpriced
-    boat cannot be booked even by a hand-crafted POST.
+    DailyRate is nullable and a manager may leave it blank, but a boat with
+    no price is not ready to rent: it reaches checkout with a NULL total that
+    the demo card happily "pays". Filtering here rather than in a template
+    covers all three callers, the booking page, the availability page and
+    attempt_booking()'s re-derivation, so a hand-crafted POST is refused too.
     """
     release_expired_holds()
 
@@ -1532,13 +1543,13 @@ def cancel_rental_as_manager(client_id, boat_id, rental_date):
 def refund_rental(client_id, boat_id, rental_date):
     """Record that the refund for a cancelled charter has been paid back.
 
-    Manager-only, and takes all three key components, because it acts on
-    someone else's booking -- the same shape as cancel_rental_as_manager().
-    There is no client-side counterpart on purpose: a client marking their
-    own refund issued would be recording the office's side of the ledger.
+    Manager-only, and takes all three key components because it acts on
+    someone else's booking, the same shape as cancel_rental_as_manager().
+    There is no client-side version: a client marking their own refund issued
+    would be writing the office's side of the ledger.
 
-    It only ever stamps RefundedAt. The money moves outside this app, so this
-    is a record of that having happened, not the act of doing it.
+    It only stamps RefundedAt. The money moves outside this app, so this
+    records that it happened rather than doing it.
     """
     form = ConfirmDeleteForm()
     if not form.validate_on_submit():
@@ -1599,8 +1610,8 @@ def supervision_assignments():
     form.staff_id.choices = staff_choices()
 
     if not form.staff_id.choices:
-        # Render the list anyway -- redirecting would make the page unreachable
-        # while existing rows are still worth looking at.
+        # Render the list anyway. Redirecting would make the page unreachable
+        # while the rows already on it are still worth reading.
         flash("Hire a staff member first — only staff can be supervised.", "warning")
     elif form.validate_on_submit():
         try:

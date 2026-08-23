@@ -1,3 +1,14 @@
+"""Demo data for the /generate-data button and the "stock this harbour" action.
+
+generate_data() clears and refills everything except Office, then rebuilds the
+fleet, the people and the rentals. stock_office() is the non-destructive
+version for a single city.
+
+build_boat() is the one place a boat is made physically coherent: length is
+drawn per type, and seats, power, weight, cabins and engine layout follow from
+it. Bypass it and you get a seven-metre yacht that sleeps five.
+"""
+
 import random
 from collections import defaultdict
 from datetime import datetime, timedelta, date
@@ -43,12 +54,15 @@ SEED_OFFICES = [
 def generate_data():
     """Refill the demo data, keeping the harbours.
 
-    Offices are deliberately NOT wiped. A manager can open an office in any
-    city, and deleting them here meant the only way to restock the fleet was to
-    destroy every city anyone had added -- which is exactly what happened. The
-    five seeded offices are recreated only if their row is missing, so an
-    edited address survives too, and the new fleet spreads across every office
-    that exists rather than just those five.
+    Offices are the one table this does not wipe. A manager can open an office
+    in any city, so clearing them would make the only fleet-restocking tool
+    also destroy every city anyone had added. The five seeded offices come back
+    only if their row is missing, which leaves an edited address alone, and the
+    new boats spread over every office that exists rather than those five.
+
+    One transaction: the do_* helpers flush and never commit, or a failure
+    halfway through leaves the database wiped and empty. A new table means a
+    new line in the delete sequence, in the right place for its foreign keys.
     """
     try:
         db.session.execute(text("DELETE FROM `Maintains`"))
@@ -175,7 +189,7 @@ def boat_figures(kind, length):
         rate_per_metre = random.uniform(90, 160)
 
     weight = round(length ** 3 * random.uniform(0.55, 0.95), 1)
-    # Rounded to the nearest 10 -- nobody quotes a charter at EUR 1,337.42.
+    # Rounded to the nearest 10. Nobody quotes a charter at EUR 1,337.42.
     daily_rate = Decimal(round(length * rate_per_metre, -1)).quantize(CENTS)
     return max(2, seats), horsepower, weight, daily_rate
 
@@ -228,8 +242,10 @@ def build_boat(boat_id, office_id, availability=AVAILABILITY_AVAILABLE):
 
 
 def stock_office(office_id, count=6):
-    """
-    Give one office a small fleet, deleting nothing.
+    """Give one office a small fleet, deleting nothing.
+
+    The non-destructive counterpart to generate_data(). Reach for this when a
+    single city needs boats.
     """
     return [build_boat(f"B{uuid4().hex[:8]}", office_id) for _ in range(count)]
 
@@ -238,8 +254,11 @@ MAINTENANCE_SHARE = 0.12
 
 
 def do_boats(offices):
-    """
-    200 boats spread over every office, each guaranteed one bookable boat.
+    """200 boats spread over every office, each guaranteed one bookable boat.
+
+    The first pass round the offices is forced available, so no harbour ends up
+    listed but empty or maintenance-only. A client can see those and cannot
+    book in them.
     """
     for i in range(200):
         first_round = i < len(offices)
@@ -285,17 +304,17 @@ def do_rentals():
         created_at = (datetime.combine(rental_date, DEFAULT_START_TIME)
                       - timedelta(days=random.randint(2, 40)))
 
-        # A cancelled charter carries the refund trail, and the two stamps have
-        # to be ordered: booked, then called off, then paid back -- and none of
-        # it in the future. A booking for a month away can have been made
-        # tomorrow, so for these the creation date is pulled back into the past
-        # first, or the cancellation would predate the booking.
+        # A cancelled charter carries the refund trail, and the stamps have to
+        # come in order: booked, then called off, then paid back, none of it in
+        # the future. A booking for next month can have been created tomorrow,
+        # so for these the creation date is pulled into the past first or the
+        # cancellation would predate the booking.
         cancelled_at = refunded_at = None
         if status == PAYMENT_CANCELLED:
             created_at = min(created_at, now - timedelta(days=2))
             cancelled_at = min(created_at + timedelta(hours=random.randint(6, 240)), now)
-            # Not every refund has been dealt with yet: an outstanding one is
-            # the state the manager page exists to act on.
+            # Leave some unrefunded. An outstanding refund is the state the
+            # manager page exists to act on.
             if random.random() < 0.6:
                 refunded_at = min(cancelled_at + timedelta(hours=random.randint(12, 168)),
                                   now)

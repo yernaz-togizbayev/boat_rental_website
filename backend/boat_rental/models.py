@@ -1,3 +1,10 @@
+"""SQLAlchemy models, hand-maintained to match database/Group05_Createtable.sql.
+
+There is no Alembic here. The SQL files create the tables, not db.create_all(),
+so a column added to one has to be added to the other by hand or the app breaks
+at runtime with no migration error to explain why.
+"""
+
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
@@ -5,10 +12,10 @@ from sqlalchemy import func
 
 from boat_rental import db
 
-# Boat.AvailabilityStatus values. Kept as constants because the SQL seed data
-# and the generator both write these exact strings; comparing against a
-# different casing only worked by accident under MariaDB's case-insensitive
-# default collation.
+# Boat.AvailabilityStatus values. Constants because the SQL seed data and the
+# generator both write these exact strings, and comparing against a different
+# casing only ever worked by accident under MariaDB's case-insensitive default
+# collation.
 AVAILABILITY_AVAILABLE = "Available"
 AVAILABILITY_MAINTENANCE = "Maintenance"
 
@@ -16,21 +23,20 @@ AVAILABILITY_MAINTENANCE = "Maintenance"
 # the app moves a rental from UNPAID to PAID and never back.
 PAYMENT_PAID = "PAID"
 PAYMENT_UNPAID = "UNPAID"
-# A charter that was paid for and then called off. The row is kept because it
-# is the only record that the client was charged -- the same reason
-# TotalAmount is frozen at booking rather than recomputed from DailyRate. It
-# no longer holds the boat: rental_overlap_filter() ignores this status.
+# A charter that was paid for and then called off. The row survives because it
+# is the only record that the client was charged, the same reason TotalAmount
+# is frozen at booking instead of recomputed from DailyRate. It stops holding
+# the boat because rental_overlap_filter() skips this status.
 PAYMENT_CANCELLED = "CANCELLED"
 
 CENTS = Decimal("0.01")
 
-
 # A charter starts at the morning handover unless a rental says otherwise.
 DEFAULT_START_TIME = time(9, 0)
 
-# Payment is due this far ahead of the ride.
+# How far ahead of the ride payment is due, and the shorter window a booking
+# gets when it is made too late for that.
 ADVANCE_NOTICE = timedelta(hours=24)
-
 LATE_BOOKING_GRACE = timedelta(minutes=15)
 
 
@@ -42,11 +48,11 @@ def ride_start(rental_date, start_time=None):
 def payment_deadline(rental_date, start_time=None, created_at=None):
     """When an unpaid booking stops holding its boat.
 
-    Normally 24 hours before the ride. A booking made *inside* that window
-    cannot be given 24 hours' notice that has already passed, so it gets
-    LATE_BOOKING_GRACE from when it was made instead -- enough to finish
-    paying, and no overnight hold. Whichever is later wins, so booking early
-    never shortens your deadline.
+    Normally 24 hours before the ride. You cannot give 24 hours' notice that
+    has already passed, so a booking made inside that window gets
+    LATE_BOOKING_GRACE from when it was made instead: long enough to finish
+    paying, short enough that nothing is held overnight for free. Whichever
+    deadline is later wins, so booking early never shortens it.
     """
     deadline = ride_start(rental_date, start_time) - ADVANCE_NOTICE
     if created_at is not None and created_at > deadline:
@@ -67,10 +73,12 @@ def hold_expired(rental_date, start_time=None, created_at=None, now=None):
 
 
 def charter_total(daily_rate, days):
+    """Rate times nights as a Decimal, or None if the boat has no rate.
+
+    The only place a charter is priced. Multiply a float rate by a day count
+    anywhere else and you reintroduce the rounding error DECIMAL(10,2) exists
+    to prevent.
     """
-    Rate x nights as Decimal, or None if the boat has no rate.
-    """
-    
     if daily_rate is None or days <= 0:
         return None
     return (Decimal(daily_rate) * days).quantize(CENTS)
@@ -91,18 +99,17 @@ class Office(db.Model):
 def served_harbours():
     """(city, country) for everywhere the fleet operates, alphabetically.
 
-    There is no City table -- a city exists because an Office row names it --
-    so this is the only definition of "where we operate". The home page, the
+    There is no City table. A city exists because some Office row names it, so
+    this is the only definition of where we operate, and the home page, the
     booking picker, the availability filter and the manager rentals filter all
-    have to agree on it, which is why it lives here in models rather than in
-    routes: forms.py needs it too, and cannot import routes without closing a
-    circular loop.
+    have to agree on it. It lives in models rather than routes because forms.py
+    needs it too and cannot import routes without a circular import.
 
-    Grouped so a city with two offices appears once. The country is picked with
-    min() rather than joined, because everything downstream keys off the city
-    and a city listed twice would be a duplicate option, a duplicate card and
-    an ambiguous filter -- two offices in one city disagreeing about their
-    country is a data-entry error, not a case to render.
+    Grouped by city so one with two offices still appears once. The country
+    comes from min() rather than a join: everything downstream keys off the
+    city, and listing it twice would mean a duplicate option, a duplicate card
+    and an ambiguous filter. Two offices in the same city disagreeing about
+    their country is a data-entry problem, not something to render.
     """
     return [(city, country) for city, country in
             Office.query.with_entities(Office.City, func.min(Office.Country))
@@ -158,11 +165,11 @@ class Boat(db.Model):
     def jacuzzi(self):
         """True, False, or None for a boat that cannot have one.
 
-        A yacht and a catamaran each carry the column; a motorboat has no
-        such row, and None keeps "not that kind of boat" a different answer
-        from "no jacuzzi". Here rather than in a template because the booking
-        cards and the availability table both ask, and the two must agree on
-        which hulls the question even applies to.
+        Yachts and catamarans carry the column; a motorboat has no subclass
+        row at all. None keeps "not that kind of boat" distinct from "no
+        jacuzzi", which are different answers. It lives here rather than in a
+        template because the booking cards and the availability table both
+        ask, and they have to agree on which hulls the question applies to.
         """
         row = self.yacht or self.catamaran
         return bool(row.HasJacuzzi) if row is not None else None
@@ -214,10 +221,10 @@ class Rental(db.Model):
 
     @property
     def refund_due(self):
-        """Money was taken, the charter was called off, and it is still owed.
+        """Money was taken, the charter was called off, and none of it is back.
 
-        Only a cancellation that kept its row can owe anything: an unpaid
-        booking is deleted outright, because nothing was ever taken.
+        Only a cancellation that kept its row can owe anything. An unpaid
+        booking is deleted outright, since nothing was ever taken.
         """
         return self.is_cancelled and self.RefundedAt is None
 

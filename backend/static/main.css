@@ -1,9 +1,9 @@
 /* ==========================================================================
-   Boat rental — visual system
+   Boat rental: visual system
 
    Direction: admiralty chart. Chart paper ground, ink line work, shallow-water
-   cyan, and chart magenta — which on a real nautical chart marks lights,
-   cautions and restricted areas, and here carries every committing or
+   cyan, and chart magenta. On a real nautical chart magenta marks lights,
+   cautions and restricted areas; here it carries every committing or
    destructive action.
 
    Loaded after Bootstrap, so single-class overrides below win on cascade
@@ -76,8 +76,8 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
 
 .text-muted { color: var(--sound) !important; }
 
-/* Every measurement, ID, date and count is mono — the app is tabular figures
-   and they have to align. */
+/* Every measurement, ID, date and count is mono. The app is mostly figures in
+   columns and they have to line up. */
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 :focus-visible {
@@ -91,8 +91,8 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
    -------------------------------------------------------------------------- */
 
 /* Sticky lives on the header, not the nav: a sticky element only sticks
-   within its parent's box, and the header is exactly the nav's height —
-   so sticking the nav itself would do nothing at all. */
+   within its parent's box, and the header is exactly the nav's height, so
+   sticking the nav itself would do nothing. */
 .site-header {
   position: sticky;
   top: 0;
@@ -134,7 +134,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   color: #fff;
   background: rgba(255, 255, 255, .07);
 }
-/* The magenta underline is the only accent in the bar — it marks where you are. */
+/* The magenta underline is the only accent in the bar. It marks where you are. */
 .site-header .navbar-nav .nav-link.is-current {
   color: #fff;
   box-shadow: inset 0 -2px 0 var(--magenta);
@@ -159,8 +159,8 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   padding: 1.75rem 1.25rem 4rem;
 }
 
-/* Attribution band. Quiet by design -- it has to be present on every page, so
-   it must not compete with the page it sits under. */
+/* Attribution band. Deliberately quiet: it appears on every page, so it must
+   not compete with the page above it. */
 .site-footer {
   max-width: 1180px;
   margin: 0 auto;
@@ -295,7 +295,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
    Signature: the sounding strip
 
    Depths on a chart are printed as bare numerals. Boat specs get the same
-   treatment — the numeral carries, the unit is a hairline caption.
+   treatment: the numeral carries, the unit is a hairline caption.
    -------------------------------------------------------------------------- */
 
 .soundings {
@@ -343,7 +343,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
-  /* Tinted panel behind the photo — this is what shows if the lookup failed
+  /* Tinted panel behind the photo, which is what shows if the lookup failed
      or the image is still loading, so a card is never an empty hole. */
   background: linear-gradient(160deg, var(--ink-soft), var(--ink));
   transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
@@ -571,7 +571,7 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 .has-extra { color: var(--ink); font-weight: 600; }
 .no-extra { color: var(--sound); }
 /* A boat that is taken or ashore. Shown rather than hidden, so the fleet looks
-   like a fleet -- but drained of colour and carrying no radio, so there is
+   like a fleet, but drained of colour and carrying no radio, so there is
    nothing to click and nothing to submit. */
 .spec-plate.is-unavailable {
   cursor: not-allowed;
@@ -751,11 +751,11 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 .form-check-input:checked { background-color: var(--magenta); border-color: var(--magenta); }
 
 /* --------------------------------------------------------------------------
-   Tables — hairline rules, micro-caps headers, mono figures
+   Tables: hairline rules, micro-caps headers, mono figures
    -------------------------------------------------------------------------- */
 
 /* Bootstrap paints striping and hover as an inset box-shadow on the cells,
-   reading --bs-table-accent-bg off the row -- so these have to be set as
+   reading --bs-table-accent-bg off the row, so these have to be set as
    custom properties. A plain background-color on the <tr> is painted over. */
 .table {
   color: var(--ink);
@@ -825,7 +825,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 .flash-stack { margin-bottom: 1.25rem; }
 
 /* --------------------------------------------------------------------------
-   Stat cards on /analytics — soundings, scaled down
+   Stat cards on /analytics: soundings, scaled down
    -------------------------------------------------------------------------- */
 
 .stat-grid {
@@ -862,7 +862,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 .stat.is-accent .figure { color: var(--magenta); }
 
 /* --------------------------------------------------------------------------
-   Hero — isobath field behind the type
+   Hero: isobath field behind the type
    -------------------------------------------------------------------------- */
 
 .chart-hero {
@@ -907,8 +907,8 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   text-transform: uppercase;
   letter-spacing: .14em;
   /* Sits over the least-scrimmed corner, so it is the first thing a bright
-     photo washes out -- it measured 2.9 even before the photo was lifted. The
-     paler ink and the shadow together put it back above the 3.0 floor. */
+     photo washes out. It measured 2.9 even before the photo was brightened;
+     the paler ink and the shadow together put it back above the 3.0 floor. */
   color: #e2eff4;
   text-shadow: 0 1px 3px rgba(10, 35, 51, .85);
 }
@@ -928,10 +928,10 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   /* Heavier where the headline sits, lighter where the photo should show, but
      nowhere near opaque: at .95 the left third was effectively solid ink and
      only 4% of the photograph came through behind the headline. It is the text
-     shadow on .hero-body that buys this -- the shadow does the legibility work
-     the scrim used to, and does it only under the glyphs instead of over the
-     whole band. Measured across eight hero images, white text on the worst
-     pixel here reads 7.1 against a 4.5 floor. */
+     shadow on .hero-body that pays for this: it does the legibility work
+     under the glyphs, where it is needed, instead of dimming the whole band.
+     Measured across eight hero images, white text on the worst pixel here
+     reads 7.1 against a 4.5 floor. */
   background: linear-gradient(100deg, rgba(10, 35, 51, .65) 12%, rgba(10, 35, 51, .42) 62%, rgba(10, 35, 51, .36) 100%);
 }
 .chart-hero .isobaths {

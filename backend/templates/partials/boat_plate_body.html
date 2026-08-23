@@ -4,9 +4,9 @@
 {% if kind and boat_type_images.get(kind) %}
 <img class="plate-photo" src="{{ boat_type_images[kind] }}" alt="A {{ kind }}" loading="lazy">
 {% endif %}
-{# Boat models are named for their length in feet -- a "Lagoon 42" is a
-   42-footer -- so builder + feet reads like the real product name and gives
-   the imperial-minded a size they recognise. #}
+{# Boat models are named for their length in feet: a "Lagoon 42" is a
+   42-footer. Builder plus feet reads like the real product name, and gives
+   anyone who thinks in feet a size they recognise. #}
 <div class="plate-head">
   <span class="maker">{{ boat.Manufacturer }}{% if boat.Length %} {{ (boat.Length * 3.281)|round|int }}{% endif %}</span>
   {% if boat.yacht %}<span class="badge bg-warning">Yacht</span>

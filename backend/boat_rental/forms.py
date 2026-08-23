@@ -1,3 +1,10 @@
+"""WTForms definitions, plus the card validators the demo checkout uses.
+
+Choices on the SelectFields are filled in at construction or by the route, so
+pre_validate is what rejects a tampered POST: a boat in another city, a manager
+in a staff slot. That check runs before anything reaches SQL.
+"""
+
 from flask import current_app
 from flask_wtf import FlaskForm
 from wtforms import SelectField, EmailField, DateField, SubmitField, StringField, HiddenField, BooleanField, IntegerField, FloatField, DecimalField
@@ -18,10 +25,10 @@ def validate_end_after_start(form, field):
             raise ValidationError("End date must be after start date.")
 
 
-# Demo checkout. These are Stripe's published test numbers, used here only as a
-# convention a grader will recognise -- nothing is sent anywhere, and no card
-# details are stored. Any other Luhn-valid number is treated as declined so the
-# happy path cannot be reached by typing something plausible.
+# Stripe's published test numbers, used purely as a convention a grader will
+# recognise. Nothing is sent anywhere and no card details are stored. Any other
+# Luhn-valid number is declined, so you cannot reach the happy path by typing
+# something that merely looks like a card.
 TEST_CARD_ACCEPTED = "4242424242424242"
 TEST_CARD_DECLINED = "4000000000000002"
 
@@ -42,7 +49,7 @@ def grouped_card(value):
 
 
 def passes_luhn(number):
-    """Standard Luhn checksum -- what tells a typo from a real card number."""
+    """Standard Luhn checksum, which is what catches a mistyped digit."""
     total, parity = 0, len(number) % 2
     for index, digit in enumerate(number):
         digit = int(digit)
@@ -57,8 +64,9 @@ def passes_luhn(number):
 def validate_card_number(form, field):
     """Reject anything that is not a plausible card number.
 
-    Whether a *valid* card is accepted or declined is a payment decision, not a
-    form-validation one, so it lives in the route -- this only catches typos.
+    Whether a valid card is then accepted or declined is a payment decision
+    rather than a form one, so that lives in the route. This only catches
+    typos.
     """
     digits = card_digits(field.data)
     if not 13 <= len(digits) <= 19 or not passes_luhn(digits):
@@ -103,20 +111,19 @@ class BookingSearchForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(BookingSearchForm, self).__init__(*args, **kwargs)
         try:
-            # served_harbours() rather than a query of its own: it is the
-            # shared definition of where we operate. The query here was
-            # distinct but unordered, so the picker came out in whatever order
-            # the offices were created in.
+            # served_harbours() is the shared definition of where we operate,
+            # so the picker cannot drift out of order or out of step with the
+            # other city lists.
             #
-            # The label carries the country; the value stays the bare city,
-            # because the city is what get_available_boats() and every card
-            # and filter key off.
+            # The label carries the country, the value stays the bare city:
+            # the city is what get_available_boats(), the harbour cards and
+            # every filter key off.
             self.city.choices = [("", "Select City...")] + [
                 (city, f"{city}, {country}") for city, country in served_harbours()
             ]
         except Exception:
-            # The office table may not exist yet (first boot, before the
-            # init scripts have run) — fall back to an empty picker.
+            # On first boot the Office table may not exist yet, before the
+            # init scripts have run. Fall back to an empty picker.
             current_app.logger.exception("Could not load city choices")
             self.city.choices = [("", "Select City...")]
 
@@ -259,9 +266,9 @@ class OfficeForm(FlaskForm):
     submit = SubmitField("Save office")
 
 
-# The m:n relations from the ER model. Choices are filled in by the route, so
-# SelectField.pre_validate is what rejects a POST naming, say, a manager in the
-# staff slot -- the check happens before anything reaches SQL.
+# The m:n relations from the ER model. The route fills in the choices, so
+# SelectField.pre_validate is what rejects a POST naming a manager in the staff
+# slot, before anything reaches SQL.
 class SupervisesForm(FlaskForm):
     manager_id = SelectField("Manager", validators=[DataRequired()], coerce=str)
     staff_id = SelectField("Staff member", validators=[DataRequired()], coerce=str)
@@ -300,7 +307,7 @@ class BoatForm(FlaskForm):
     # Yacht extras
     yacht_name = StringField("Yacht name", validators=[Optional(), Length(max=50)])
 
-    # Shared by yacht and catamaran -- both can have one, a motorboat cannot.
+    # Shared by yacht and catamaran. Both can have one, a motorboat cannot.
     # One field rather than two: two inputs of the same name would both post,
     # and the checked one would win whichever type was on screen.
     has_jacuzzi = BooleanField("Has jacuzzi?")

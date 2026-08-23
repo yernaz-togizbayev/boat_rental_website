@@ -1,3 +1,14 @@
+"""Photographs for the harbour cards, the boat plates and the hero band.
+
+Four sources, tried in order: a hand-picked Unsplash photo, a live Unsplash
+search, the Wikipedia lead image, then a generic harbour from a small pool. The
+hand-picked ones exist because a search for a small town tends to return a flag
+or a map rather than a coastline.
+
+Everything is hotlinked. IMAGE_FETCH=off skips the lookups entirely, which is
+what lets the smoke test run offline.
+"""
+
 import json
 import os
 import random
@@ -23,10 +34,10 @@ def _unsplash(photo_id, width):
 
 
 # Unsplash asks that a displayed photo credit its photographer with a link back
-# to their profile, and that the link carries these parameters so the referral
-# is attributed. Their guidelines also say the download endpoint is only for a
-# user *taking* a photo -- setting a wallpaper, dropping it into a document --
-# and that hotlinking one for display is not that, so nothing here calls it.
+# to their profile, carrying these parameters so the referral is attributed.
+# Their guidelines also say the download endpoint is only for a user actually
+# taking a photo, such as setting a wallpaper or dropping it into a document.
+# Hotlinking one for display does not count, so nothing here calls it.
 UNSPLASH_UTM = "utm_source=imse_boat_rental&utm_medium=referral"
 UNSPLASH_HOME = f"https://unsplash.com/?{UNSPLASH_UTM}"
 
@@ -34,14 +45,13 @@ _PHOTO_ID = re.compile(r"photo-([^?/]+)")
 
 # Photographers, keyed by the id in the CDN URL above.
 #
-# How these were recovered matters if more are ever added: the API has no
-# endpoint mapping a CDN filename to its photo -- /photos/<id> wants the short
-# id and 404s on this one -- so each was found by searching for its subject and
-# matching the filename against `urls.raw` in the results. That only works
-# while a photo ranks for some query, so the ones no search surfaced are absent
-# here rather than guessed at, and the credits page says so. A photo fetched
-# through the API at runtime registers itself, so live lookups are never
-# uncredited.
+# Worth knowing if you ever add more: there is no API route from a CDN filename
+# back to its photo. /photos/<id> wants Unsplash's short id and 404s on this
+# one. Each of these was found instead by searching for the photo's subject and
+# matching the filename against urls.raw in the results, which only works while
+# the photo still ranks for some query. The ones no search turned up are left
+# out rather than guessed at, and the credits page says so. Photos fetched live
+# through the API register themselves below, so those are never uncredited.
 PHOTO_CREDITS = {
     "1567899378494-47b22a2ae96a": ("Marcin Ciszewski", "collega"),
     "1581272281570-61907217b302": ("Miquel Gelabert", "miquelgd"),
@@ -86,7 +96,7 @@ def photo_credits():
 
 
 BOAT_TYPE_IMAGES = {
-    # Marcin Ciszewski -- superyacht at anchor off a wooded shore
+    # Marcin Ciszewski, superyacht at anchor off a wooded shore
     "yacht": _unsplash("1567899378494-47b22a2ae96a", 780),
     # white cruising catamaran, both hulls broadside in turquoise water
     "catamaran": _unsplash("1581272281570-61907217b302", 780),
@@ -113,9 +123,9 @@ CITY_IMAGES = {
     "Sant Antoni": _unsplash("1547668932-54be495edf50", 600),   # Ibiza moorings
 }
 
-# Last resort, when both lookups come back empty. A pool rather than one image
-# because a single default made every unlisted harbour look identical; these four
-# are deliberately unalike and show no known landmark.
+# Last resort, when both lookups come back empty. A pool rather than a single
+# default, which made every unlisted harbour look like the same place. These
+# four are deliberately unalike and show no recognisable landmark.
 GENERIC_CITY_IMAGES = [
     _unsplash("1517696522815-46a004b80a2d", 600),  # aerial yacht basin
     _unsplash("1528580279421-f0b84f9d7640", 600),  # sailboats off a quay
@@ -134,9 +144,9 @@ def _generic_city_image(city):
 
 
 # A place article's lead image is very often a flag, a locator map or a coat of
-# arms rather than a photograph -- "Mallorca" resolves to Flag_of_Mallorca.svg.
-# Matched with separators so a real photo whose filename happens to contain one
-# of these words is not thrown away.
+# arms rather than a photograph. "Mallorca" resolves to Flag_of_Mallorca.svg.
+# Matched with separators around them so a real photo whose filename happens to
+# contain one of these words survives.
 _NOT_A_PHOTO = re.compile(
     r"(^|[_\-.%28 ])("
     r"flag|flags|map|maps|locator|location|borders|outline|topographic|"
@@ -149,9 +159,9 @@ _NOT_A_PHOTO = re.compile(
 # Anything squarer than this crops to a sliver in the 4:3 card.
 CARD_MIN_ASPECT = 1.3
 
-# city -> url or None, for this process. Both lookups are slow and the Unsplash
-# demo key allows only 50 requests an hour, so a miss is cached as hard as a hit:
-# without that, every page load re-asks about the same handful of cities.
+# city -> url or None, for the life of this process. Both lookups are slow and
+# a demo Unsplash key allows 50 requests an hour, so misses are cached as firmly
+# as hits. Otherwise every page load asks again about the same few cities.
 _RESOLVED = {}
 
 
@@ -186,8 +196,8 @@ def _search_unsplash(city, width):
 
     if not results:
         return None
-    # Credit it before returning: this is the one path where the photographer
-    # is known for certain, and it is lost as soon as the response is dropped.
+    # Credit it before returning. This is the one path where we know the
+    # photographer for certain, and that is lost once the response goes.
     _remember_credit(results[0])
     # urls.raw carries its own query string, so our sizing params get appended.
     return f"{results[0]['urls']['raw']}&w={width}&q=75&auto=format&fit=crop"
@@ -271,8 +281,9 @@ def _resolve_unknown_cities(cities, width):
     return found
 
 # The hero pool: cruising grounds rather than generic yacht stock. All landscape
-# and all wide -- the hero band is roughly 5:2, so anything squarer crops to its
-# middle and anything with a big empty sky reads as a grey smear at 50% opacity.
+# and all wide. The hero band is roughly 5:2, so anything squarer crops to its
+# middle, and anything with a big empty sky reads as a grey smear behind the
+# scrim.
 HERO_IMAGES = [
     (_unsplash("1549893072-4bc678117f45", 1100), "Portofino"),
     (_unsplash("1583844056361-4418a8f2a985", 1100), "Positano"),
@@ -323,8 +334,8 @@ def city_and_boat_images(cities, width=600):
 
     Returns (city_url_by_city, image_url_by_boat_type). Every city gets a URL:
     the hand-picked one if we have it, else a looked-up photo of that city, else
-    a generic harbour. IMAGE_FETCH=off skips the lot -- a hotlinked CDN image is
-    a network call like any other, so that is what makes the page offline-clean.
+    a generic harbour. IMAGE_FETCH=off skips all of it, which is what makes the
+    page work offline: a hotlinked CDN image is a network call like any other.
     """
     if not _enabled():
         return {}, {}

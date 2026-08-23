@@ -162,14 +162,14 @@
     {% endif %}
   </form>
   <script>
-    // Reserving without having picked a boat used to ask "Reserve this boat
-    // for 3 days?", submit, and only then come back with "that boat is not
-    // available" -- which is not what went wrong, after a round trip, at the
-    // top of the page. Say it here instead, before anything is sent.
+    // Catch "Reserve" with nothing selected here, before anything is sent.
+    // Left to the server it comes back as "that boat is not available", which
+    // is not what went wrong, after a round trip, at the top of the page.
     //
-    // The radios are visually hidden, so the `required` attribute is no use:
-    // browsers cannot show a validation bubble on a control they cannot focus,
-    // and refuse to submit without telling anyone why.
+    // The `required` attribute is no use: the radios are visually hidden so
+    // the whole card is clickable, and a browser cannot show a validation
+    // bubble on a control it cannot focus. It refuses to submit and explains
+    // nothing.
     document.querySelectorAll('.js-confirm').forEach(function (btn) {
       var error = document.getElementById('book-error');
       var bar = document.querySelector('.book-bar');
@@ -180,8 +180,8 @@
           if (error) error.hidden = false;
           // Scroll the bar, not the boat grid. Scrolling to the grid pushes
           // this button off the bottom of the screen, taking the message with
-          // it -- the complaint ends up somewhere the reader cannot see, which
-          // reads as the button doing nothing at all. block:'nearest' means
+          // it, so the complaint lands somewhere the reader cannot see and
+          // the button looks like it did nothing. block:'nearest' means
           // this barely moves when the button is already on screen, which it
           // is: they just clicked it.
           if (bar) {
@@ -212,9 +212,9 @@
 <script>
   // A search re-renders the whole page, so the reader lands back at the top
   // looking at the form they have just used, with the answer below the fold.
-  // Both outcomes carry #search-results -- boats found, and the harbour that
-  // has none -- so an empty result scrolls to the explanation rather than
-  // leaving the page apparently unchanged.
+  // Both outcomes carry #search-results, boats found and the harbour that
+  // has none, so an empty result scrolls to the explanation instead of
+  // leaving the page looking unchanged.
   (function () {
     var results = document.getElementById('search-results');
     if (!results) return;
