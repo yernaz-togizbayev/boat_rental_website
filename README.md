@@ -11,9 +11,6 @@ offices, the staff and the bookings behind it.
 
 **Course**: 052400-1 VU Information Management and Systems Engineering, University of Vienna  
 **Group**: 05  
-**Team**:
-- Student 1: Golovanov, Ilja – 12133820
-- Student 2: Togizbayev, Yernaz – 01429473
 
 **Main Focus**:
 - Conceptual modeling with an ER diagram in Chen notation
