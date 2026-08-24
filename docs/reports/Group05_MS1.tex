@@ -6,76 +6,33 @@
 
 % Load useful packages
 \usepackage{graphicx}                           % Graphics
+% The report was written in a flat directory, so its figures are referenced by
+% bare filename. In this repository they are sorted into folders; compile from
+% the repository root and these make the original names resolve unchanged.
+\graphicspath{{docs/assets/}{docs/ER-diagram/}{docs/UML/}{docs/SQLexecution_screenshots/}}
 \usepackage{amsmath}                            % Math
-\usepackage{amssymb}                            % \rightarrow in text
 \usepackage{xcolor}                             % Link color
-\definecolor{custom-blue}{RGB}{0,99,166}
+\usepackage{listings}
+\definecolor{custom-blue}{RGB}{0,99,166} 
 \usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[normalem]{ulem}
 \hypersetup{colorlinks=true, allcolors=custom-blue}
 \usepackage[default]{sourcesanspro}             % Load font
 \usepackage[T1]{fontenc}                        % Special characters
 \usepackage{fancyhdr}                           % Load header, footer package
 \usepackage{titlesec}
-\usepackage{float}                              % [H] figure placement
-\usepackage{enumitem}                           % Nested enumerate labels
 
 \usepackage{lastpage}                           % Footer note
+\usepackage{lipsum}                             % For dummy text
 
 \usepackage[table,xcdraw]{xcolor}               % Table requirements
-\usepackage{listings}                           % Code listings
-\usepackage{booktabs}                           % Nicer tables
 
 \definecolor{darkblue}{HTML}{365F91}
 \definecolor{blue}{HTML}{4F81BD}
 \definecolor{darkdarkblue}{HTML}{243F60}
-\definecolor{codebg}{HTML}{F4F6F8}
-
-% Colours for the highlighted application-domain description
-\definecolor{entitycol}{HTML}{2E9BD6}           % Entities
-\definecolor{attrcol}{HTML}{E8912A}             % Attributes
-\definecolor{relcol}{HTML}{E0399B}              % Relationships
-\definecolor{keywordcol}{HTML}{0B4F9E}          % SQL keywords
-\definecolor{stringcol}{HTML}{C0392B}           % String literals
-\definecolor{numbercol}{HTML}{999999}           % Line numbers
-
-\newcommand{\ent}[1]{\textcolor{entitycol}{\textbf{#1}}}
-\newcommand{\attr}[1]{\textcolor{attrcol}{\textbf{#1}}}
-\newcommand{\rel}[1]{\textcolor{relcol}{\textbf{#1}}}
-\newcommand{\card}[1]{\textbf{#1}}
-
-\lstset{
-  basicstyle=\ttfamily\scriptsize,
-  backgroundcolor=\color{codebg},
-  frame=single,
-  rulecolor=\color{lightgray},
-  breaklines=true,
-  columns=fullflexible,
-  showstringspaces=false,
-  captionpos=b,
-  xleftmargin=16pt,
-  framexleftmargin=16pt,
-  numbers=left,
-  numberstyle=\ttfamily\tiny\color{numbercol},
-  numbersep=8pt,
-}
-
-\lstdefinestyle{sqlstyle}{
-  language=SQL,
-  morekeywords={SET,NOT,EXISTS,CONCAT,AS},
-  keywordstyle=\color{keywordcol},
-  stringstyle=\color{stringcol},
-}
-
-\lstdefinestyle{jsonstyle}{
-  language=,
-  keywordstyle=\color{keywordcol},
-  stringstyle=\color{black},
-}
-
-\lstdefinestyle{consolestyle}{
-  language=,
-  numbers=left,
-}
 
 % Section Style
 \titleformat{\section}
@@ -101,6 +58,49 @@
 \titlespacing*{\subparagraph}
 {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
+% Define Style for SQL
+\lstdefinelanguage{SQL}{
+    morekeywords={SELECT,FROM,WHERE,JOIN,ON,AS, CONCAT},
+    sensitive=false,
+    morecomment=[l]--,
+    morestring=[b]',
+}
+
+\lstset{
+    language=SQL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{white},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+% Define Style for JSON
+\lstdefinelanguage{json}{
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{white}
+}
+
+
 \pagestyle{myheadings}                          % Own header
 \pagestyle{fancy}                               % Own style
 \fancyhf{}                                      % Clear header, footer
@@ -108,28 +108,29 @@
 \setlength{\headheight}{30pt}                   % Set header hight
 \renewcommand{\headrulewidth}{0.5pt}            % Top line
 \renewcommand{\footrulewidth}{0.5pt}            % Bottom line
-
-\fancyhead[L]{\includegraphics[width=3cm]{docs/assets/univienna-logo.eps}} % Header left
+  
+\fancyhead[L]{\includegraphics[width=3cm]{univienna-logo.eps}} % Header left
 \fancyhead[C]{}                                 % Header center
 \fancyhead[R]{University of Vienna}             % Header right
+%\fancyfoot[L]{\textcopyright Jamie Doe}         % Footer left
 \fancyfoot[C]{}                                 % Footer center
 \fancyfoot[R]{\thepage/\pageref{LastPage}}      % Footer right
 
+
 \newcommand{\studentone}{Student 1: Golovanov, Ilja, 12133820}
 \newcommand{\studenttwo}{Student 2: Togizbayev, Yernaz, 01429473}
-
-\setcounter{tocdepth}{3}
 
 %%% Begin document %%%
 \begin{document}
 
 \begin{figure}                                  % Include Logo
 \flushleft
-\includegraphics[width=0.4\textwidth]{docs/assets/univienna-logo.eps}
+\includegraphics[width=0.4\textwidth]{univienna-logo.eps}
 \end{figure}
 
 % Set title, author, date
-\title{052400-1 VU Information Management and \\Systems Engineering (2025S)\\[1em] { Milestone 1\\[1em]
+\title{052400-1 VU Information Management and \\Systems Engineering (2025S)\\[1em] { Milestone 1\\[1em] 
+%\large(\textit{Please note: submission deadline: Tue 12.11.2024 13:00})
 }}
 \author{
 \Large{Group 05}\\[1em]
@@ -145,183 +146,167 @@
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Milestone 1}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\keyattributerow}{\begin{tabular}[c]{@{}l@{}}6- 9 Entities with key attribute \& at least \\ two other attributes\end{tabular}}
+\newcommand{\isarow}{\begin{tabular}[c]{@{}l@{}}At least one IS-A   (inheritance) \\ relationship with 2+ child entities\end{tabular}}
 
-\begin{table}[t]
-\centering
-\begin{tabular}{|p{0.44\textwidth}|p{0.44\textwidth}|}
-\hline
-\rowcolor[HTML]{9DD1F1}
-\textbf{Requirements} & \textbf{Realization} \\ \hline
-\rowcolor[HTML]{DDEBF7}
-\multicolumn{2}{|l|}{\textbf{Entities}} \\ \hline
-6- 9 Entities with key attribute \& at least two other attributes & Office \\ \hline
-                                                                  & Client \\ \hline
-                                                                  & Employee \\ \hline
-                                                                  & Staff member \\ \hline
-                                                                  & Manager \\ \hline
-                                                                  & Boat \\ \hline
-                                                                  & Yacht \\ \hline
-                                                                  & Motorboat \\ \hline
-                                                                  & Catamaran \\ \hline
-At least one weak entity                                          & Rental \\ \hline
-\rowcolor[HTML]{DDEBF7}
-\multicolumn{2}{|l|}{\textbf{Relationships}} \\ \hline
-At least one unary (recursive) relationship & Manager supervises manager \\ \hline
-At least one binary relationship (1:n)      & Employee works in Office \\ \hline
-                                            & Client makes Rental \\ \hline
-At least one binary relationship (m:n)      & Staff Member maintains Boat \\ \hline
-At least one IS-A (inheritance) relationship with 2+ child entities & Employee $\rightarrow$ Manager, Staff Member \\ \hline
-                                            & Boat $\rightarrow$ Yacht, Motorboat, Catamaran \\ \hline
+\begin{table}[]
+\begin{tabular}{|l|l|} \hline 
+
+\rowcolor[HTML]{4C94D8} 
+\textbf{Requirements}                           & \textbf{Realization} \\ \hline  
+\rowcolor[HTML]{D9D9D9}
+\textbf{Entities}                               &                      \\ \hline  
+\keyattributerow                                &                      Office\\ \hline  
+                                                &                      Client\\ \hline  
+                                                &                      Employee\\ \hline  
+                                                &                      Staff member\\ \hline  
+                                                &                      Manager\\ \hline  
+                                                &                      Boat\\ \hline  
+                                                &                      Yacht\\ \hline  
+ &Motorboat\\ \hline  
+ &Catamaran\\ \hline 
+At least   one weak entity                      &                      Rental\\ \hline  
+\rowcolor[HTML]{D9D9D9}
+\textbf{Relationships}                          &                      \\ \hline  
+At least one unary   (recursive) relationship   &                      Manager supervises manager\\ \hline  
+At least one   binary relationship (1:n)        &                      Employee works in Office\\ \hline  
+                                                &                      Client makes Rental\\ \hline  
+At least one   binary relationship (m:n)        &                      Staff Member maintains Boat\\ \hline  
+\isarow                                         &                      Employee $\rightarrow$ Manager, Staff Member\\ \hline  
+                                                &                      Boat $\to$ Yacht, Motorboat, Catamaran\\ \hline 
 \end{tabular}
 \end{table}
 
-\subsection{Team - Conceptual Modeling}
+\definecolor{entityblue}{RGB}{119, 196, 241}
+\definecolor{attributeyellow}{RGB}{255, 198, 48}
+\definecolor{relationshippink}{RGB}{255, 90, 255}
+\definecolor{cardinalitygreen}{RGB}{73, 125, 33}
 
+\newcommand{\entity}[1]{\textcolor{entityblue}{\textbf{#1}}}
+\newcommand{\attribute}[1]{\textcolor{attributeyellow}{\textbf{#1}}}
+\newcommand{\relationship}[1]{\textcolor{relationshippink}{\textbf{#1}}}
+\newcommand{\cardinality}[1]{\textcolor{cardinalitygreen}{\textbf{#1}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Milestone 1}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Team - Conceptual Modeling}                           
 \subsubsection{Describe the Application Domain}
 
-Our \ent{boat} rental company operates through multiple \ent{offices}
-\attr{[street, country, ZIP, city]}, where \ent{employees} \attr{[first name,
-last name, birth date, mobile number, self-insurance number, email, street,
-country, ZIP, city, salary]} \rel{work} in these locations. An \ent{employee}
-\rel{is} either a \ent{manager} \attr{[department, management level]} or a
-\ent{staff member} \attr{[work shift, is on duty]}. \card{Every} \ent{employee}
-\rel{works} at \card{exactly one} \ent{office}. There is a hierarchy of
-\ent{managers}, which means \card{one} \ent{manager} \rel{supervise}
-\card{many} other \ent{managers} with lower management levels.
+Our \entity{boat} rental company operates through multiple \entity{offices} \attribute{[street, country, ZIP, city]}, where \entity{employees} \attribute{[first name, last name, birth date, mobile number, self-insurance number, email, street, country, ZIP, city, salary]} \relationship{work} in these locations. An \entity{employee} \relationship{is} either a \entity{manager} \attribute{[department, management level]} or a \entity{staff member} \attribute{[work shift, is on duty]}. \cardinality{Every} \entity{employee} \relationship{works} at \cardinality{exactly one} \entity{office}. There is a hierarchy of \entity{managers}, which means \cardinality{one} \entity{manager} \relationship{supervise} \cardinality{many} other \entity{managers} with lower management levels.
+\par
+Customers are represented by \entity{clients} \attribute{[first name, last name, birth date, email, street, ZIP, city, country, mobile number, captain license number]}. Customers can \relationship{make} \entity{rentals} \attribute{[rental date, rental end date, payment status]}, which always \relationship{scheduled for} a \cardinality{specific} \entity{boat} and belong to \cardinality{specific} \entity{client}. A \entity{rental} cannot exist without both a \entity{client} and a \entity{boat}.
+\par
+\entity{Boats} \attribute{[serial number, length, weight, seats, manufacturer, availability status, horsepower]} come in \relationship{different types}: \entity{yachts} \attribute{[yacht name, has jacuzzi]}, \entity{motorboats} \attribute{[engine type, fuel type]}, and \entity{catamarans} \attribute{[max capacity, number of cabins]}. Each boat can be \relationship{maintained} by \cardinality{several} \entity{staff members}. Furthermore each \entity{Boat} \relationship{belongs} to a \cardinality{certain} \entity{office}.
 
-Customers are represented by \ent{clients} \attr{[first name, last name, birth
-date, email, street, ZIP, city, country, mobile number, captain license
-number]}. Customers can \rel{make} \ent{rentals} \attr{[rental date, rental end
-date, payment status]}, which always \rel{scheduled for} a \card{specific}
-\ent{boat} and belong to \card{specific} \ent{client}. A \ent{rental} cannot
-exist without both a \ent{client} and a \ent{boat}.
-
-\ent{Boats} \attr{[serial number, length, weight, seats, manufacturer,
-availability status, horsepower]} come in \card{different types}: \ent{yachts}
-\attr{[yacht name, has jacuzzi]}, \ent{motorboats} \attr{[engine type, fuel
-type]}, and \ent{catamarans} \attr{[max capacity, number of cabins]}. Each boat
-can be \rel{maintained} by \card{several} \ent{staff members}. Furthermore each
-\ent{Boat} \rel{belongs to} a \card{certain} \ent{office}.
-
+\newpage
 \subsubsection{Logical Design -- ER Diagram in Chen Notation}
-
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{docs/ER-diagram/er_diagram.jpg}
-\caption{Boat Rental Diagram}
+    \centering
+    \includegraphics[width=1\linewidth]{er_diagram.jpg}
+    \caption{Boat Rental Diagram}
+    \label{fig:enter-label}
 \end{figure}
 
 \subsubsection{Relational Modeling -- SQL CREATE Statements}
 
 \begin{itemize}
-  \item Office: OfficeID (PK), Country, City, ZIP, Address
-  \item Employee: EmployeeID (PK), OfficeID(FK), FirstName, LastName, Street,
-        ZIP, City, Country, Birthdate, Email, MobileNr, SelfInsuranceNr, Salary
-  \item Manager: ManagerID (PK, FK), Department, ManagementLevel, SupervisorID
-        (FK $\rightarrow$ ManagerID)
-  \item Staff: StaffID (PK, FK), WorkShift, IsOnDuty
-  \item Client: ClientID (PK), FirstName, LastName, Street, ZIP, City, Country,
-        Birthdate, Email, MobileNr, CaptainLicenseNumber
-  \item Boat: BoatID (PK), Length, Seats, Manufacturer, AvailabilityStatus,
-        Weight, Horsepower, OfficeID (FK)
-  \item Yacht: YachtID (PK, FK), YachtName, HasJacuzzi
-  \item Motorboat: MotorboatID (PK, FK), EngineType, FuelType
-  \item Catamaran: CatamaranID (PK, FK), NrOfCabins, MaxCapacity
-  \item Rental: ClientID (PK, FK), BoatID (PK, FK), RentalDate (PK),
-        RentalEndDate, PaymentStatus
-  \item Supervises: ManagerID (PK, FK), StaffID (PK, FK)
-  \item Maintains: StaffID (PK, FK), BoatID(PK, FK)
+    \item Office: OfficeID (PK), Country, City, ZIP, Address
+    \item Employee: EmployeeID (PK), OfficeID(FK), FirstName, LastName, Street, ZIP, City, Country, Birthdate, Email, MobileNr, SelfInsuranceNr, Salary
+    \item Manager: ManagerID (PK, FK), Department, ManagementLevel, SupervisorID (FK $\to$ ManagerID)
+
+    \item Staff: StaffID (PK, FK), WorkShift, IsOnDuty
+    \item Client: ClientID (PK), FirstName, LastName, Street, ZIP, City, Country, Birthdate, Email, MobileNr, CaptainLicenseNumber
+    \item Boat: BoatID (PK), Length, Seats, Manufacturer, AvailabilityStatus, Weight, Horsepower, OfficeID (FK)
+    \item Yacht: YachtID (PK, FK), YachtName, HasJacuzzi
+    \item Motorboat: MotorboatID (PK, FK), EngineType, FuelType
+    \item Catamaran: CatamaranID (PK, FK), NrOfCabins, MaxCapacity
+    \item Rental: ClientID (PK, FK), BoatID (PK, FK), RentalDate (PK), RentalEndDate, PaymentStatus
+    \item Supervises: ManagerID (PK, FK), StaffID (PK, FK)
+    \item Maintains: StaffID (PK, FK), BoatID(PK, FK)
 \end{itemize}
+In our relational model, we used a SupervisorID column in the Manager table to represent that one manager can supervise another. This is a small difference from the ER diagram, where this was shown as a separate relationship. We chose this way because it matches the 1-to-many relationship and makes it easier to query who supervises whom.
 
-In our relational model, we used a SupervisorID column in the Manager table to
-represent that one manager can supervise another. This is a small difference
-from the ER diagram, where this was shown as a separate relationship. We chose
-this way because it matches the 1-to-many relationship and makes it easier to
-query who supervises whom.
+\newpage
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Individual - Student 1}
+\studentone
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\quad \studentone
-
 \subsubsection{Use Case Definition and Design}
-
-\paragraph{Textual Description}
-
-\subparagraph{Weak entity}
-
-\noindent\textbf{Use Case Name:} Boat is being booked for a client \\
-\textbf{Trigger:} A client chooses to book a boat online and fills out the forms. \\
-\textbf{Preconditions:} The client is logged in. \\
-\textbf{Main Flow:}
-
+\paragraph*{Textual Description}
+\subparagraph*{Weak entity}
+\noindent
+\textbf{Use Case Name:}                                        
+Boat is being booked for a client\\
+\textbf{Trigger:}                                           
+A client chooses to book a boat online and fills out the forms.\\
+\textbf{Preconditions:}                                     
+The client is logged in.\\
+\textbf{Main Flow:}                                          
 \begin{enumerate}
-  \item Client fills in data for a rental
-  \begin{enumerate}[label=(\alph*)]
-    \item Client enters the desired date for their rental.
-    \item Client enters the desired destination (office) of their rental.
-    \item Client enters if they need a skipper or not.
-    \item Client enters optionally what type of boat they want.
-  \end{enumerate}
-  \item Backend validates the data and executes database query.
-  \item Database queries available boats corresponding with desired data.
-  \item Backend gets the data and displays it to the client.
-  \item Client sees a list of boats, chooses one and clicks "Book rental".
-  \item Client fills in payment information.
-  \item Backend validates the data and compares the desired outcome to the
-        clients information.
-  \item Backend connects to the payment service.
-  \item Client confirms payment.
-  \item A new Rental record is being inserted into the database.
-  \item The new Rental record is linked with the user and the desired boat
-        during insertion.
-  \item Backend summarizes all data and a confirmation with the summary is being
-        presented to the client.
+    \item Client fills in data for a rental
+    \begin{enumerate}
+        \item Client enters the desired date for their rental.
+        \item Client enters the desired destination (office) of their rental.
+        \item Client enters if they need a skipper or not.
+        \item Client enters optionally what type of boat they want.
+    \end{enumerate}
+    \item Backend validates the data and executes database query.
+    \item Database queries available boats corresponding with desired data.
+    \item Backend gets the data and displays it to the client.
+    \item Client sees a list of boats, chooses one and clicks "Book rental".
+    \item Client fills in payment information.
+    \item Backend validates the data and compares the desired outcome to the clients information.
+    \item Backend connects to the payment service.
+    \item Client confirms payment.
+    \item A new Rental record is being inserted into the database.
+    \item The new Rental record is linked with the user and the desired boat during insertion.
+    \item Backend summarizes all data and a confirmation with the summary is being presented to the client.
 \end{enumerate}
-
-\noindent\textbf{Postconditions:} A new rental (weak entity) exists in the
-system and is linked to a client and to a boat. \\
+\textbf{Postconditions:}
+A new rental (weak entity) exists in the system and is linked to a client and to a boat.\\
 \textbf{Entities:}
-
 \begin{itemize}
-  \item Client $\rightarrow$ Entity needed for weak-entity.
-  \item Boat $\rightarrow$ Parent-entity needed for weak-entity.
-  \item Rental $\rightarrow$ Weak-entity depended on client and boat.
+    \item Client $\to$ Entity needed for weak-entity.
+    \item Boat $\to$ Parent-entity needed for weak-entity.
+    \item Rental $\to$ Weak-entity depended on client and boat.
 \end{itemize}
+\paragraph*{Graphical Representation}
 
-\paragraph{Graphical Representation}
+\begin{center}
+\textcolor{gray}{
+    \includegraphics[width=0.92\linewidth]{ActivityDiagram_IG.png}
+}
+\end{center}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{docs/UML/activity_booking_IG.png}
-\end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Analytics Report}
-
-\paragraph{Concept}
-
-\noindent\textbf{Use Case:} Client books a Rental for a boat \\
-\textbf{Filter Field:} Boat.OfficeID.City (@desiredCity) \\
-\textbf{Entities Involved:}
-
+\paragraph*{Concept}
+\noindent
+\textbf{Use Case: } Client books a Rental for a boat
+\\
+\textbf{Filter Field: } Boat.OfficeID.City (@desiredCity)
+\\
+\textbf{Entities Involved: }
 \begin{itemize}
-  \item Rental
-  \item Boat
-  \item Office
-  \item Client
+    \item Rental
+    \item Boat
+    \item Office
+    \item Client
 \end{itemize}
 
-\noindent\textbf{SQL Query:}
+\newpage
 
-\begin{lstlisting}[style=sqlstyle,caption={SQL Query for 'Booking rental' Use Case}]
-SET @desiredCity  = 'Dubrovnik';
+\textbf{SQL Query:}
+\begin{lstlisting}[language=SQL, caption= SQL Query for 'Booking rental' Use Case]
+SET @desiredCity = 'Dubrovnik';
 SET @desiredStart = '2025-07-01';
 SET @desiredEnd   = '2025-07-05';
 
-SELECT
+SELECT 
   b.BoatID,
   b.Length,
   b.Seats,
@@ -329,7 +314,7 @@ SELECT
   b.Weight,
   b.Horsepower
 FROM Boat b
-JOIN Office o
+JOIN Office o 
   ON b.OfficeID = o.OfficeID
 WHERE o.City = @desiredCity
   AND b.AvailabilityStatus = 'Available'
@@ -337,80 +322,61 @@ WHERE o.City = @desiredCity
     SELECT 1
     FROM Rental r
     WHERE r.BoatID = b.BoatID
-      AND r.RentalDate    < @desiredEnd
+      AND r.RentalDate < @desiredEnd
       AND r.RentalEndDate > @desiredStart
   );
 \end{lstlisting}
 
-Here would be a query, that checks which boats are currently available at a
-certain city. This is executed through looking up the city of the office and
-comparing that to the boats that office has currently available. It also checks
-for maintenance status of the boats and does not query them.
+\noindent
+Here would be a query, that checks which boats are currently available at a certain city. This is executed through looking up the city of the office and comparing that to the boats that office has currently available. It also checks for maintenance status of the boats and does not query them.
 
-\paragraph{Proof of Concept}
+\paragraph*{Proof of Concept }
+\noindent
+To proof, that the use-case works and that the output of the above query changes, we perform the following:
+\noindent
+\begin{enumerate}[label=\textbf{Step \arabic*}:, leftmargin=*]
+    \item Create the ground structure of the database by executing the "Group05\_Createtable.sql" file. This creates all the necessary tables. The concrete entities we need for the "book rental" use-case are listed above: \textbf{Office, Client, Boat, Rental}.
+    \item Insert the dummy data needed for our use-case.
+    \item We execute the above defined query to see our initial state and see the following output in the console:
+    \begin{lstlisting}
+    +--------+--------+-------+--------------+--------+------------+
+    | BoatID | Length | Seats | Manufacturer | Weight | Horsepower |
+    +--------+--------+-------+--------------+--------+------------+
+    | B201   |     22 |     6 | MotorStar2   |   1100 |         70 |
+    | B300   |     26 |    10 | CataLite1    |   1300 |         50 |
+    +--------+--------+-------+--------------+--------+------------+
+    \end{lstlisting}
+    One can see that the office of the desired city "Dubrovnik", has currently two boats available.
+    \item Now we execute the use-case "Book rental" process.
+    \newpage
+    \item We execute the defined query again to look if the output has changed.
+    \begin{lstlisting}
+    +--------+--------+-------+--------------+--------+------------+
+    | BoatID | Length | Seats | Manufacturer | Weight | Horsepower |
+    +--------+--------+-------+--------------+--------+------------+
+    | B201   |     22 |     6 | MotorStar2   |   1100 |         70 |
+    +--------+--------+-------+--------------+--------+------------+
+    \end{lstlisting}
+    The output of the query shows only one available boat left. It correctly identifies, that the boat with the BoatID "B300" was booked and is not available anymore.
+\end{enumerate}
 
-To proof, that the use-case works and that the output of the above query
-changes, we perform the following:
-
-\begin{description}
-  \item[Step 1:] Create the ground structure of the database by executing the
-        "Group05\_Createtable.sql" file. This creates all the necessary tables.
-        The concrete entities we need for the "book rental" use-case are listed
-        above: \textbf{Office, Client, Boat, Rental}.
-  \item[Step 2:] Insert the dummy data needed for our use-case.
-  \item[Step 3:] We execute the above defined query to see our initial state and
-        see the following output in the console:
-\end{description}
-
-\begin{lstlisting}[style=consolestyle]
-+--------+--------+-------+--------------+--------+------------+
-| BoatID | Length | Seats | Manufacturer | Weight | Horsepower |
-+--------+--------+-------+--------------+--------+------------+
-| B201   |     22 |     6 | MotorStar2   |   1100 |         70 |
-| B300   |     26 |    10 | CataLite1    |   1300 |         50 |
-+--------+--------+-------+--------------+--------+------------+
-\end{lstlisting}
-
-\quad One can see that the office of the desired city "Dubrovnik", has currently
-two boats available.
-
-\begin{description}
-  \item[Step 4:] Now we execute the use-case "Book rental" process.
-  \item[Step 5:] We execute the defined query again to look if the output has
-        changed.
-\end{description}
-
-\begin{lstlisting}[style=consolestyle]
-+--------+--------+-------+--------------+--------+------------+
-| BoatID | Length | Seats | Manufacturer | Weight | Horsepower |
-+--------+--------+-------+--------------+--------+------------+
-| B201   |     22 |     6 | MotorStar2   |   1100 |         70 |
-+--------+--------+-------+--------------+--------+------------+
-\end{lstlisting}
-
-\quad The output of the query shows only one available boat left. It correctly
-identifies, that the boat with the BoatID "B300" was booked and is not available
-anymore.
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{NoSQL Design}
+\paragraph*{Design Overview}
+\noindent
+The weak entity Rental is dependend on the entities Boat and Client and by assumption always referenced in combination with either. Therefore I decided to include the Rental entity completely in the Client entity for the NoSQL design. In the rental record itself is then the boat (through the BoatID) referenced.
 
-\paragraph{Design Overview}
-
-The weak entity Rental is dependend on the entities Boat and Client and by
-assumption always referenced in combination with either. Therefore I decided to
-include the Rental entity completely in the Client entity for the NoSQL design.
-In the rental record itself is then the boat (through the BoatID) referenced. \\
-\noindent\textbf{Entities involved:}
-
+\noindent
+\textbf{Entities involved:}
 \begin{itemize}
-  \item Boat
-  \item Client
-  \item Rental
+    \item Boat
+    \item Client
+    \item Rental
 \end{itemize}
 
-\noindent\textbf{Json structure:}
-
-\begin{lstlisting}[style=jsonstyle]
+\noindent
+\textbf{Json structure:}
+\begin{lstlisting}
 {
   "_id": "C123",
   "firstName": "Max",
@@ -438,206 +404,191 @@ In the rental record itself is then the boat (through the BoatID) referenced. \\
     }
   ]
 }
+
 \end{lstlisting}
 
-\paragraph{Expected Execution and Possible Changes}
+\paragraph*{Expected Execution and Possible Changes}
+\noindent
+\textbf{Expected Execution:}
 
-\noindent\textbf{Expected Execution:} \\
-The "Book Rental" use-case would only needs to do one write operation on one
-collection, the client. More concretely edit the "rentals" array of the specific
-client in question, making it very simple. In case of looking up currently
-available boats at a certain location, the boat collection would be checked for
-the current availability status and all the rentals from all the clients would
-be compared. This on the other hand, needs more operations.
+\noindent
+The "Book Rental" use-case would only needs to do one write operation on one collection, the client. More concretely edit the "rentals" array of the specific client in question, making it very simple. In case of looking up currently available boats at a certain location, the boat collection would be checked for the current availability status and all the rentals from all the clients would be compared. This on the other hand, needs more operations.\\
 
-\noindent\textbf{Possible changes:} \\
-If searching for rentals becomes more frequent, it might be better to make a
-collection "rentals" on its own. The entries would then reference the client and
-boat respectively. This also would be better if suddenly clients book many
-rentals, containing a huge array. Although this seems to be less likely.
+\noindent
+\textbf{Possible changes:}
 
-\paragraph{Five Rules of Thumb}
+\noindent
+If searching for rentals becomes more frequent, it might be better to make a collection "rentals" on its own. The entries would then reference the client and boat respectively. This also would be better if suddenly clients book many rentals, containing a huge array. Although this seems to be less likely.
 
+\paragraph*{Five Rules of Thumb}
 \begin{enumerate}
-  \item Favor embedding unless there is a good reason not to: \\
-        $\rightarrow$ Rental is embedded into the client.
-  \item The need to access an object on its own is a compelling reason not to
-        embed it: \\
-        $\rightarrow$ Rentals are accessed mostly through the context of the
-        client or the boat, so it should not be a problem to keep the rentals
-        embedded.
-  \item High-cardinality arrays are a compelling reason not to embed: \\
-        $\rightarrow$ It seems to be unlikely that a client would have a large
-        number of rentals.
-  \item Consider the write/read ratio of a collection/document when
-        denormalizing: \\
-        $\rightarrow$ Writing operations are only happening during a booking,
-        which is a good. The reading operations I am not sure, especially by
-        looking up available boats with a certain filter applied.
-  \item Structure your data to match the ways that your application queries and
-        updates it: \\
-        $\rightarrow$ The update happens very easy, although the specific query
-        for an available boat seems to be less performative. If those queries
-        end up being more frequent than adding a rental after a booking, this
-        would have to change. Maybe embedding it into the boat would then be
-        optimal.
+    \item Favor embedding unless there is a good reason not to:\\
+    $\to$ Rental is embedded into the client.
+    \item The need to access an object on its own is a compelling reason not to embed it:\\
+    $\to$ Rentals are accessed mostly through the context of the client or the boat, so it should not be a problem to keep the rentals embedded.
+    \item High-cardinality arrays are a compelling reason not to embed:\\
+    $\to$ It seems to be unlikely that a client would have a large number of rentals.
+    \item Consider the write/read ratio of a collection/document when denormalizing:\\
+    $\to$ Writing operations are only happening during a booking, which is a good. The reading operations I am not sure, especially by looking up available boats with a certain filter applied.
+    \item Structure your data to match the ways that your application queries and updates it:\\
+    $\to$ The update happens very easy, although the specific query for an available boat seems to be less performative. If those queries end up being more frequent than adding a rental after a booking, this would have to change. Maybe embedding it into the boat would then be optimal.
 \end{enumerate}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+
 \subsection{Individual - Student 2}
+\studenttwo
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\quad \studenttwo
-
 \subsubsection{Use Case Definition and Design}
 
-\paragraph{Textual Description}
-
-\subparagraph{IS-A relationship}
-
-\noindent\textbf{Use Case Name:} Manager adds a new staff member \\
-\textbf{Trigger:} A manager opens the employee creation form and chooses to add
-a new staff member \\
-\textbf{Preconditions:} Manager is logged in/authenticated and assigned to an
-office \\
-\textbf{Postconditions:} A new employee exists in the system with a ``staff''
-subtype, and is linked to an office \\
-\textbf{Main Flow:}
-
-\begin{itemize}[label={},leftmargin=2em]
-  \item (1) Fill in staff information
-  \begin{itemize}[label={},leftmargin=2em]
-    \item (1.1) Manager enters staff member's personal and work-related details
-    \item (1.2) Backend validates the form data and checks that the office exists
-    \item (1.3) A new employee record is inserted into the database
-    \item (1.4) A corresponding staff record is inserted and linked to the employee
-    \item (1.5) Staff member is connected to the selected office
-    \item (1.6) A supervision record is created linking the manager to the newly
-          hired staff member
-  \end{itemize}
-  \item (2) Confirmation is shown to the manager
-\end{itemize}
-
-\noindent\textbf{Entities:} Manager $\rightarrow$ IS-A subtype of Employee
-\begin{itemize}[label={},leftmargin=5em]
-  \item Staff $\rightarrow$ IS-A subtype of Employee
-  \item Employee $\rightarrow$ parent of Staff and Manager
-  \item Office $\rightarrow$ entity outside of the IS-A relationship
-\end{itemize}
-
-\noindent\textbf{Clarification:} In this system, the action of hiring is
-represented by the Supervises relationship. When a manager supervises a staff
-member, it implies that the manager was responsible for hiring them.
-
-\paragraph{Graphical Representation}
-
+\paragraph*{Textual Description}
+\subparagraph*{IS-A relationship}
+\noindent
+\textbf{Use Case Name:} Manager adds a new staff member
+\\
+\textbf{Trigger:} A manager opens the employee creation form and chooses to add a new staff member
+\\
+\textbf{Preconditions:} Manager is logged in/authenticated and assigned to an office
+\\
+\textbf{Postconditions:} A new employee exists in the system with a “staff” subtype, and is linked to an office
+\\
+\textbf{Main Flow:} 
+\\
+\indent
+(1) Fill in staff information
+\\
+\indent\indent
+(1.1) Manager enters staff member’s personal and work-related details
+\\
+\indent\indent
+(1.2) Backend validates the form data and checks that the office exists
+\\
+\indent\indent
+(1.3) A new employee record is inserted into the database
+\\
+\indent\indent
+(1.4) A corresponding staff record is inserted and linked to the employee
+\\
+\indent\indent
+(1.5) Staff member is connected to the selected office
+\\
+\indent\indent
+(1.6) A supervision record is created linking the manager to the newly hired staff member
+\\
+\indent
+(2) Confirmation is shown to the manager
+\\
+\textbf{Entities:} Manager $\to$ IS-A subtype of Employee
+\\
+\indent\indent
+~~~~Staff $\to$ IS-A subtype of Employee
+\\
+\indent\indent
+~~~~Employee $\to$ parent of Staff and Manager
+\\
+\indent\indent
+~~~~Office $\to$ entity outside of the IS-A relationship
+\\
+\textbf{Clarification:} In this system, the action of hiring is represented by the Supervises relationship. When a manager supervises a staff member, it implies that the manager was responsible for hiring them.
+\paragraph*{Graphical Representation}
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{docs/UML/activity_newstaff_TY.png}
-\caption{UML Activity Diagram (of simple use case)}
+    \centering
+    \includegraphics[width=0.92\linewidth]{ActivityDiagram_TY.png}
+    \caption{UML Activity Diagram (of simple use case)}
+    \label{fig:enter-label}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Analytics Report}
-
-\paragraph{Concept}
-
-\noindent\textbf{Use Case:} Manager adds a new staff member and supervises them \\
-\textbf{Filter Field:} Manager.ManagerID (e.g. WHERE m.ManagerID = 'M1') \\
-\textbf{Entities Involved:}
-
+\paragraph*{Concept}
+\noindent
+\textbf{Use Case: } Manager adds a new staff member and supervises them
+\\
+\textbf{Filter Field: } Manager.ManagerID (e.g. WHERE m.ManagerID = 'M1')
+\\
+\textbf{Entities Involved: }
 \begin{itemize}
-  \item Office
-  \item Employee
-  \item Staff
-  \item Manager
-  \item Supervises
+    \item Office
+    \item Employee
+    \item Staff    
+    \item Manager
+    \item Supervises
 \end{itemize}
-
-\noindent\textbf{SQL Query:}
-
-\begin{lstlisting}[style=sqlstyle,caption={SQL Query for 'New Staff Member Hiring' Use Case}]
+\textbf{SQL Query:}
+\begin{lstlisting}[language=SQL, caption= SQL Query for 'New Staff Member Hiring' Use Case]
 SELECT
     s.StaffID,
     se.FirstName AS StaffFirstName,
-    se.LastName  AS StaffLastName,
+    se.LastName AS StaffLastName,
     s.IsOnDuty,
     o.City,
     o.Country,
     CONCAT(me.FirstName, ' ', me.LastName) AS ManagerName
 FROM Supervises sup
-JOIN Staff s     ON sup.StaffID   = s.StaffID
-JOIN Employee se ON s.StaffID     = se.EmployeeID
+JOIN Staff s ON sup.StaffID = s.StaffID
+JOIN Employee se ON s.StaffID = se.EmployeeID
 JOIN Employee me ON sup.ManagerID = me.EmployeeID
-JOIN Manager m   ON m.ManagerID   = me.EmployeeID
-JOIN Office o    ON se.OfficeID   = o.OfficeID
+JOIN Manager m ON m.ManagerID = me.EmployeeID
+JOIN Office o ON se.OfficeID = o.OfficeID
 WHERE m.ManagerID = 'M2';
+
 \end{lstlisting}
 
-This query is filtered by a specific manager (ManagerID = 'M2') and shows all
-staff members that this manager supervises. The result includes the details of
-the staff member and office information and changes each time the manager adds a
-new staff member under their supervision.
+\noindent
+This query is filtered by a specific manager (ManagerID = 'M2') and shows all staff members that this manager supervises. The result includes the details of the staff member and office information and changes each time the manager adds a new staff member under their supervision.
 
-\paragraph{Proof of Concept}
-
-The aim is to show that the result of the query changes after performing the use
-case. \\
-\noindent\textbf{Step1:} Execute all the necessary queries from
-`Group05\_Createtable.sql` to create tables for our use case. For our use case,
-these are: Office, Employee, Manager, Staff, Supervises. \\
-\noindent\textbf{Step 2:} Insert dummy data into our tables from Step 1. \\
-\noindent\textbf{Step 3:} Now we execute our SQL Query for filtering:
-
+\paragraph*{Proof of Concept }
+\noindent
+The aim is to show that the result of the query changes after performing the use case.
+\\
+\textbf{Step1:} Execute all the necessary queries from `Group05\_Createtable.sql` to create tables for our use case. For our use case, these are: Office, Employee, Manager, Staff, Supervises.
+\\
+\textbf{Step 2:} Insert dummy data into our tables from Step 1.
+\\
+\textbf{Step 3:} Now we execute our SQL Query for filtering:
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{docs/SQLexecution_screenshots/UseCaseNewStaff1_TY.png}
-\caption{Use Case Filter before Hiring new Staff Member}
+    \centering
+    \includegraphics[width=1\linewidth]{UseCaseNewStaff1_TY.png}
+    \caption{Use Case Filter before Hiring new Staff Member}
+    \label{fig:enter-label}
 \end{figure}
 
-The data filtered by ManagerID 'M2',which belongs to the HR manager 'Anna
-Smith'. As we can see, for now she has 2 employees which she supervises. Now
-let's perform 'hiring' from out use case and re-run the filtering query. \\
-\noindent\textbf{Step 4:} Add new Staff Member and place under 'M2'
-supervision. \\
-\noindent\textbf{Step 5:} Re-run the query.
-
+\noindent
+The data filtered by ManagerID 'M2',which belongs to the HR manager 'Anna Smith'. As we can see, for now she has 2 employees which she supervises. Now let's perform 'hiring' from out use case and re-run the filtering query.
+\\
+\textbf{Step 4:} Add new Staff Member and place under 'M2' supervision.
+\\
+\textbf{Step 5:} Re-run the query.
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{docs/SQLexecution_screenshots/UseCaseNewStaff2_TY.png}
-\caption{Use Case Filter before Hiring new Staff Member}
+    \centering
+    \includegraphics[width=1\linewidth]{UseCaseNewStaff2_TY.png}
+    \caption{Use Case Filter before Hiring new Staff Member}
+    \label{fig:enter-label}
 \end{figure}
 
-The proof of concept demonstrates that the analytics report correctly reflects
-the use case. Initially, Manager 'M2' supervises two staff members (S1 and S2).
-After simulating the use case --- where 'M2' adds a new staff member (S8) ---
-the query updates accordingly to show three supervised staff. The screenshots
-before and after execution confirm that the system reacts as expected to data
-manipulation operations.
-
+\noindent
+The proof of concept demonstrates that the analytics report correctly reflects the use case. Initially, Manager 'M2' supervises two staff members (S1 and S2). After simulating the use case — where 'M2' adds a new staff member (S8) — the query updates accordingly to show three supervised staff. The screenshots before and after execution confirm that the system reacts as expected to data manipulation operations.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{NoSQL Design}
-
-\paragraph{Design Overview}
-
-In my NoSQL design, each manager is stored as one document, and their supervised
-staff members are included directly inside it. Since the manager is the one who
-hires the staff member in my use case, I decided to keep the staff information
-together with the manager's data. This structure makes it easy to see which
-staff member belong to each manager, and it keeps all the related information
-together in one place.
-
-\noindent\textbf{Entities involved in this use case:}
-
+\paragraph*{Design Overview}
+\noindent
+In my NoSQL design, each manager is stored as one document, and their supervised staff members are included directly inside it. Since the manager is the one who hires the staff member in my use case, I decided to keep the staff information together with the manager’s data. This structure makes it easy to see which staff member belong to each manager, and it keeps all the related information together in one place.
+\\
+\\
+\textbf{Entities involved in this use case:}
 \begin{itemize}
-  \item Manager
-  \item Staff
-  \item Employee
-  \item Office
-  \item Supervises (relationship)
+    \item Manager
+    \item Staff
+    \item Employee
+    \item Office
+    \item Supervises (relationship)
 \end{itemize}
-
-\noindent\textbf{JSON structure:}
-
-\begin{lstlisting}[style=jsonstyle,caption={MongoDB Data Structure Design}]
+\newpage
+\noindent
+\textbf{JSON structure:}
+\\
+\begin{lstlisting}[language=json, caption= MongoDB Data Structure Design]
 {
   "manager_id": "M2",
   "name": {
@@ -665,7 +616,7 @@ together in one place.
     {
       "staff_id": "S2",
       "name": {
-        "first": "Emily",
+		"first": "Emily",
         "last": "Brown"
       },
       "work_shift": "Evening",
@@ -684,61 +635,50 @@ together in one place.
 }
 \end{lstlisting}
 
-\paragraph{Expected Execution and Possible Changes}
+\newpage
+\paragraph*{Expected Execution and Possible Changes}
+\noindent
+\textbf{Expected Execution:}
+\par
+In this use case, the manager hires a new staff member. So when this happens in the NoSQL version, only one write operation is needed: we just add the new staff member to the list of supervised staff under that manager.
 
-\noindent\textbf{Expected Execution:} \\
-In this use case, the manager hires a new staff member. So when this happens in
-the NoSQL version, only one write operation is needed: we just add the new staff
-member to the list of supervised staff under that manager.
+This is helpful because everything we need — the manager and their staff — is already stored together. We don’t need to update anything in other collections.
+\\
+\\
+\textbf{Possible Changes:}
+\par
+If we later end up hiring lots of staff, or need to access staff members separately more often, we could change the structure to store staff in their own collection and just reference them by ID.
 
-This is helpful because everything we need --- the manager and their staff ---
-is already stored together. We don't need to update anything in other
-collections.
+If there are lots of searches based on things like work shift or duty status, we could also add indexes to those fields inside the staff array to make the queries faster.
 
-\noindent\textbf{Possible Changes:} \\
-If we later end up hiring lots of staff, or need to access staff members
-separately more often, we could change the structure to store staff in their own
-collection and just reference them by ID.
-
-If there are lots of searches based on things like work shift or duty status, we
-could also add indexes to those fields inside the staff array to make the
-queries faster.
-
-\paragraph{Five Rules of Thumb}
-
-\noindent 1. Favor embedding unless there is a good reason not to:
-\begin{itemize}[label={},leftmargin=2em]
-  \item $\rightarrow$ Staff embedded inside the manager because they're directly
-        connected and always shown together.
-\end{itemize}
-
-\noindent 2. The need to access an object on its own is a compelling reason not
-to embed it:
-\begin{itemize}[label={},leftmargin=2em]
-  \item $\rightarrow$ In this case, staff are usually accessed through their
-        manager, so it's fine to keep them embedded.
-\end{itemize}
-
-\noindent 3. High-cardinality arrays are a compelling reason not to embed:
-\begin{itemize}[label={},leftmargin=2em]
-  \item $\rightarrow$ In this use case, each manager supervises a small team. If
-        it grows, referencing could be used instead.
-\end{itemize}
-
-\noindent 4. Consider the write/read ratio of a collection/document when
-denormalizing:
-\begin{itemize}[label={},leftmargin=2em]
-  \item $\rightarrow$ My design works well for reads, since all info is in one
-        place. There aren't many writes happening at once, so this structure
-        fits well.
-\end{itemize}
-
-\noindent 5. Structure your data to match the ways that your application queries
-and updates it:
-\begin{itemize}[label={},leftmargin=2em]
-  \item $\rightarrow$ Since the manager is the one doing the hiring, and we
-        often want to see who they supervise, storing the data like this makes
-        sense for my use case.
-\end{itemize}
+\paragraph*{Five Rules of Thumb}
+\noindent
+1. Favor embedding unless there is a good reason not to:
+\par
+$\to$ Staff embedded inside the manager because they're directly connected and always shown together.
+\\
+\\
+\noindent
+2. The need to access an object on its own is a compelling reason not to embed it:
+\par
+$\to$ In this case, staff are usually accessed through their manager, so it’s fine to keep them embedded.
+\\
+\\
+\noindent
+3. High-cardinality arrays are a compelling reason not to embed:
+\par
+$\to$ In this use case, each manager supervises a small team. If it grows, referencing could be used instead.
+\\
+\\
+\noindent
+4. Consider the write/read ratio of a collection/document when denormalizing:
+\par
+$\to$ My design works well for reads, since all info is in one place. There aren’t many writes happening at once, so this structure fits well.
+\\
+\\
+\noindent
+5. Structure your data to match the ways that your application queries and updates it:
+\par
+$\to$ Since the manager is the one doing the hiring, and we often want to see who they supervise, storing the data like this makes sense for my use case.
 
 \end{document}
