@@ -100,6 +100,22 @@ MongoDB starts empty — nothing fills it automatically. Sign in as a manager an
 `/manager/nosql` to rebuild the collections from whatever is currently in MariaDB. Re-run it after
 changing the relational data; the migration is one-way and never writes back.
 
+### ☁️ Deploying it
+
+`render.yaml` is a Render blueprint; `docs/DEPLOYMENT.md` is the walkthrough. The only thing that
+does not carry over from Compose is schema creation — MariaDB's entrypoint builds the database on
+first boot and a managed cloud database has no entrypoint, so `flask init-db` runs the same
+graded SQL against whatever `DATABASE_URL` points at:
+
+```bash
+cd backend && python -m flask --app app init-db          # create, seed if empty
+cd backend && python -m flask --app app init-db --reset  # drop everything, rebuild
+```
+
+It executes `database/*.sql` rather than calling `db.create_all()`, so the SQL stays the single
+source of truth for the schema. Note that Render's managed database is PostgreSQL only, so the
+MySQL comes from an external provider.
+
 ### 🔁 Useful commands
 
 ```bash
@@ -148,13 +164,15 @@ It does **not** cover the SQL seed scripts; those need MariaDB.
 
 | Path | Description |
 |------|-------------|
-| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py`, `nosql.py` |
+| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py`, `nosql.py`, `cli.py`, `sqlscript.py` |
 | `backend/templates/` | Jinja templates, all extending `base.html` |
 | `backend/static/main.css` | Custom stylesheet on top of Bootstrap |
 | `backend/smoke_test.py` | End-to-end smoke test (SQLite, no Docker needed) |
 | `database/` | Graded SQL: shared `CREATE TABLE`s plus per-student insert and query scripts |
 | `docs/` | Graded deliverables: ER diagram, NoSQL designs, SQL screenshots, UML activity diagrams |
 | `docs/reports/` | Milestone reports and the slide deck — PDF plus the LaTeX source of each |
+| `docs/DEPLOYMENT.md` | Deploying to Render with an external managed MySQL |
+| `render.yaml` | Render blueprint (Python runtime + gunicorn, **not** the dev Dockerfile) |
 
 ```text
 boat_rental_webapp/

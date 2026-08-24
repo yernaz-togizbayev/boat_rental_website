@@ -1494,6 +1494,54 @@ def main():
             check("generate_data refills Maintains",
                   db.session.execute(text("SELECT COUNT(*) FROM Maintains")).scalar() > 0)
 
+        # 17. Splitting the graded SQL. init-db feeds these files to PyMySQL one
+        #     statement at a time, so the splitter stands between the graded SQL
+        #     and whatever database it is pointed at. Splitting on ";" corrupts
+        #     the schema -- these pin the three places where it does.
+        from boat_rental import sqlscript
+
+        sql_dir = sqlscript.database_dir()
+        schema = sqlscript.schema_file(sql_dir).read_text(encoding="utf-8")
+        statements = sqlscript.split_statements(schema)
+        tables = sqlscript.created_tables(schema)
+
+        check("the schema splits into one statement per table",
+              len(statements) == len(tables) == 12,
+              f"{len(statements)} statements, {len(tables)} tables")
+        check("the commented-out CREATE DATABASE is not read as a table",
+              "boat_rental" not in tables, str(tables))
+
+        # Group05_Createtable.sql:101 has a semicolon inside a comment *inside*
+        # the Rental CREATE TABLE body. Split naively, the table is created
+        # without its primary key or either foreign key.
+        rental = [s for s in statements if "CREATE TABLE IF NOT EXISTS Rental" in s]
+        check("Rental survives as a single statement", len(rental) == 1,
+              f"{len(rental)} fragments")
+        check("Rental keeps its composite primary key",
+              bool(rental) and "PK_rental" in rental[0])
+        check("Rental keeps both foreign keys",
+              bool(rental) and rental[0].count("FOREIGN KEY") == 2)
+        check("splitting on ';' really would corrupt the schema",
+              len([s for s in schema.split(";") if s.strip()]) > len(statements),
+              "if this fails the trap is gone and this section is obsolete")
+
+        # Student2_InsertData_Initial.sql:24-25 puts trailing comments after
+        # ")," and after the terminating ";", which rules out dropping lines
+        # that merely start with "--".
+        seeds = sqlscript.seed_files(sql_dir)
+        check("init.sql declares three seed scripts in order", len(seeds) == 3,
+              str([p.name for p in seeds]))
+        check("Student1 is seeded before Student2, which owns no offices",
+              [p.name for p in seeds] == [
+                  "Student1_InsertData_Initial.sql",
+                  "Student1_InsertData_Harbours.sql",
+                  "Student2_InsertData_Initial.sql",
+              ], str([p.name for p in seeds]))
+        student2 = [p for p in seeds if p.name.startswith("Student2")][0]
+        check("trailing comments do not split the Student2 inserts",
+              len(sqlscript.split_statements(
+                  student2.read_text(encoding="utf-8"))) == 4)
+
     print()
     if FAILURES:
         print(f"{len(FAILURES)} FAILED: {', '.join(FAILURES)}")

@@ -1,0 +1,48 @@
+# Render blueprint. See docs/DEPLOYMENT.md for the walkthrough.
+#
+# Native Python runtime, deliberately NOT Docker. Two reasons:
+#
+#   1. backend/Dockerfile sets FLASK_DEBUG=1 and runs the reloader, because it
+#      exists for local Compose development. Deploying it would put interactive
+#      tracebacks on the public internet.
+#   2. A Docker service would want rootDir: backend, which leaves database/
+#      outside the build context -- and `flask init-db` needs those files.
+#
+# So rootDir stays at the repository root and gunicorn is pointed into backend/.
+services:
+  - type: web
+    name: boat-rental
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r backend/requirements.txt
+    # --chdir both changes directory and puts backend/ on sys.path, so "app:app"
+    # resolves to the module-level app in backend/app.py with no extra wsgi.py.
+    # Threads, because images.py fetches harbour photos with a blocking urlopen
+    # on the request thread. 60s, because the 30s default is not enough for a
+    # cold connection to a sleeping free-tier database.
+    startCommand: >-
+      gunicorn --chdir backend --bind 0.0.0.0:$PORT
+      --workers 2 --threads 4 --timeout 60 --access-logfile - app:app
+    # Not "/": that redirects to /login, which runs Client.query.all() and would
+    # fail the deploy whenever the free database is briefly asleep. /credits is
+    # template-only -- no database, no network.
+    healthCheckPath: /credits
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"            # matches backend/Dockerfile's python:3.11-slim
+      - key: SECRET_KEY
+        generateValue: true        # never the "dev" fallback on a public host
+      - key: DATABASE_URL
+        sync: false                # paste in the dashboard; never commit it
+      - key: DB_SSL
+        value: "1"                 # managed MySQL requires TLS
+      - key: SESSION_COOKIE_SECURE
+        value: "1"                 # Render terminates TLS, so the cookie can be Secure
+      - key: TZ
+        value: Europe/Vienna       # payment deadlines are naive DATETIMEs
+      - key: IMAGE_FETCH
+        value: "off"               # 0.1 CPU; blocking image lookups are not worth it
+      # MONGO_URI is deliberately absent. nosql.available() returns False and
+      # only the three /manager/nosql* pages degrade; everything else is
+      # unaffected. Add a MongoDB Atlas URI here if you want those pages live.
