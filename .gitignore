@@ -231,3 +231,6 @@ compose.override.yml
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.nav
+*.snm
+*.vrb

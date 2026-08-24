@@ -441,13 +441,20 @@ document. On the current demo data one run migrates:
 Collection / embedded & Documents \\
 \midrule
 offices    & 20 \\
-managers   & 4 \\
-clients    & 11 \\
+managers   & 3 \\
+clients    & 10 \\
 boats (embedded in offices)      & 200 \\
-rentals (embedded, twice each)   & 323 \\
+rentals (embedded, twice each)   & 329 \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\textwidth]{docs/slides/08-nosql-console.png}
+\caption{The MongoDB page: the migration button with the resulting
+collection counts, and both analytics reports run against the documents.}
+\end{figure}
 
 Semantics are preserved rather than approximated. Money is written as a string,
 not a double: the columns are \texttt{DECIMAL(10,2)} and a float cannot hold
@@ -536,6 +543,14 @@ in place & 1  & 1 & 1 & IXSCAN \\
 \end{tabular}
 \end{center}
 
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.92\textwidth]{docs/slides/09-nosql-indexes.png}
+\caption{Execution statistics for both reports, each query run with its
+index dropped and then in place.}
+\label{fig:indexstats}
+\end{figure}
 Without the index every harbour document is fetched and discarded; with it,
 exactly the one needed is read. The ratio is the number of harbours, so it grows
 as the company opens offices. The absolute times are both around a millisecond
@@ -609,15 +624,17 @@ db.managers.find({ "supervisedStaff.employeeId": "E2" })
 \toprule
 Index & Docs examined & Keys examined & Returned & Plan \\
 \midrule
-dropped  & 4 & 0 & 1 & COLLSCAN \\
+dropped  & 3 & 0 & 1 & COLLSCAN \\
 in place & 1 & 1 & 1 & IXSCAN + FETCH \\
 \bottomrule
 \end{tabular}
 \end{center}
 
+Both measurements are shown in Figure~\ref{fig:indexstats}.
+
 The collection scan reads every manager document and searches each
 \texttt{supervisedStaff} array; the index goes straight to the one that contains
-the staff member. With four managers in the demo data the saving is small in
+the staff member. With three managers in the demo data the saving is small in
 absolute terms, and it would be dishonest to present it as a speed-up at this
 size. What the numbers show is the shape of the change: the scan is proportional
 to the number of managers, the indexed lookup is not.
