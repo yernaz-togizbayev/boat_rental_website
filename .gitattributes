@@ -1,0 +1,6 @@
+# GitHub's Linguist treats everything under docs/ as documentation and leaves it
+# out of the repository language statistics. The LaTeX sources of the milestone
+# reports live there, so without this override the language bar shows no TeX at
+# all -- which it did from the moment those files moved out of the repository
+# root. Count them.
+docs/reports/*.tex linguist-documentation=false linguist-detectable=true
