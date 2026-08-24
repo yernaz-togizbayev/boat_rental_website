@@ -1,8 +1,8 @@
 # Deploying to Render
 
 The app normally runs under Docker Compose, where MariaDB's entrypoint builds the database on
-first boot. A managed cloud database has no entrypoint, so the one piece that does not carry
-over is schema creation — `flask init-db` exists for exactly that.
+first boot. A managed cloud database has no entrypoint, so the one thing that does not carry over
+is schema creation — you run the SQL yourself, once.
 
 `render.yaml` in the repository root is a Render blueprint covering the rest.
 
@@ -36,49 +36,57 @@ mysql+pymysql://USER:PASSWORD@HOST:PORT/DBNAME?charset=utf8mb4
 `?charset=utf8mb4` is not optional — the seed data contains `Radića` and a zero-width space in
 `'Tourlos Marina'`, and a provider defaulting to `latin1` will mangle both.
 
+**TLS goes in the same URL.** Managed MySQL requires it, and SQLAlchemy reads `ssl_ca`,
+`ssl_cert`, `ssl_key`, `ssl_capath`, `ssl_cipher` and `ssl_check_hostname` straight out of the
+query string and hands them to PyMySQL — so no application code is involved. With the provider's
+CA file:
+
+```
+mysql+pymysql://USER:PASSWORD@HOST:PORT/DBNAME?charset=utf8mb4&ssl_ca=/etc/secrets/ca.pem
+```
+
+On Render, upload the CA as a Secret File (it lands in `/etc/secrets/`) and point `ssl_ca` at it.
+
 The database name comes from the provider (Aiven calls it `defaultdb`). That is fine:
 `Group05_Createtable.sql` has its `CREATE DATABASE` and `USE` lines commented out, so the schema
 drops into whatever database the URL selects. **Do not uncomment them.**
 
-## 2. Create the schema — from your machine, before deploying
+## 2. Load the schema — once, from your machine
 
-Render's free tier has no shell, so run this locally against the remote database:
+Feed the graded SQL to the MySQL client in the order MariaDB's entrypoint uses. The client
+handles these files natively, comments and all, so there is nothing to install into the app and
+nothing to parse.
+
+There is no `mysql` binary on a typical Windows box, but the MariaDB image has one:
 
 ```bash
-cd backend
-DATABASE_URL='mysql+pymysql://USER:PASSWORD@HOST:PORT/DBNAME?charset=utf8mb4' \
-DB_SSL=1 \
-  python -m flask --app app init-db
+cd /path/to/boat_rental_webapp
+
+for f in database/Group05_Createtable.sql \
+         database/Student1/Student1_InsertData_Initial.sql \
+         database/Student1/Student1_InsertData_Harbours.sql \
+         database/Student2/Student2_InsertData_Initial.sql; do
+  echo "-> $f"
+  docker run --rm -i mariadb:11.3 mariadb \
+    -h HOST -P PORT -u USER -pPASSWORD --ssl DBNAME < "$f"
+done
 ```
 
-Doing it here rather than in a build hook means a TLS problem surfaces as a real traceback
-instead of a truncated build log. TLS is the most likely first failure: every managed MySQL
-requires it, and a `DATABASE_URL` alone cannot ask PyMySQL for it — hence `DB_SSL=1`. Set
-`DB_SSL_CA=/path/to/ca.pem` as well to verify the certificate rather than merely encrypt.
+Order matters: the schema first, then Student1 (which owns the shared `Office` rows), then
+Student2. That order is what `database/init.sql` declares — but do not run `init.sql` itself, as
+its `SOURCE` paths point inside the MariaDB container and will not resolve here.
 
-A variable set in the shell beats the repository `.env`, because `load_dotenv()` does not
-override — so the command above targets the cloud even with a local `.env` present.
+The seeds are plain `INSERT`s, so this is a **one-time** load: running it twice fails on duplicate
+keys. To start over, drop the tables and repeat.
 
-The command prints what it is about to do before touching anything:
+Verify:
 
-```
-SQL directory: .../database
-Target:        mysql+pymysql://user:***@host:3306/defaultdb?charset=utf8mb4
-Schema:        Group05_Createtable.sql
-Seed order:    Student1_InsertData_Initial.sql -> Student1_InsertData_Harbours.sql -> ...
+```bash
+docker run --rm -i mariadb:11.3 mariadb -h HOST -P PORT -u USER -pPASSWORD --ssl DBNAME \
+  -e "SELECT COUNT(*) FROM Office; SELECT COUNT(*) FROM Boat;"
 ```
 
-The seed order is read out of `database/init.sql` rather than hardcoded, because that file is the
-graded declaration of it and the order matters: Student1 owns the shared `Office` rows.
-
-| Invocation | Effect |
-|---|---|
-| `init-db` | Creates tables (`IF NOT EXISTS`), seeds **only if `Office` is empty** |
-| `init-db --reset --yes` | Drops all 12 tables, rebuilds, reseeds |
-| `init-db --dry-run` | Prints the plan, executes nothing |
-
-Re-running the bare command is a safe no-op. The seeds are plain `INSERT`s and would fail on
-duplicate keys, which is what the `Office` gate prevents.
+Twenty offices and six boats means it worked.
 
 ## 3. Deploy
 
@@ -87,8 +95,7 @@ it is marked `sync: false` so it is never committed. `SECRET_KEY` is generated f
 
 | Variable | Set by | Why |
 |---|---|---|
-| `DATABASE_URL` | you, in the dashboard | the MySQL above |
-| `DB_SSL` | blueprint (`1`) | managed MySQL requires TLS |
+| `DATABASE_URL` | you, in the dashboard | the MySQL above, TLS params included |
 | `SECRET_KEY` | blueprint (generated) | the fallback is the well-known string `dev` |
 | `SESSION_COOKIE_SECURE` | blueprint (`1`) | Render terminates TLS |
 | `TZ` | blueprint (`Europe/Vienna`) | payment deadlines are naive `DATETIME`s |
@@ -114,14 +121,14 @@ photos. Turn it on if the site looks bare and you are willing to spend the reque
 Passwordless login and the simulated card are deliberate coursework decisions, documented in the
 README — not oversights. Three things genuinely matter once this is public:
 
-- `SECRET_KEY` must not be the `dev` fallback. The blueprint generates one; the app now warns at
+- `SECRET_KEY` must not be the `dev` fallback. The blueprint generates one; the app warns at
   startup if it is unset.
 - `SESSION_COOKIE_SECURE=1` behind TLS.
 - **Never the Docker runtime**, per the warning at the top.
 
 `POST /generate-data` is anonymous and wipes the demo data, which is intentional so a fresh
-deployment can be filled without signing in. It is CSRF-protected, so it cannot be triggered
-from another site, and it is self-healing by design — pressing it again refills everything.
+deployment can be filled without signing in. It is CSRF-protected, so it cannot be triggered from
+another site, and it is self-healing by design — pressing it again refills everything.
 
 ## 6. Verifying a deployment
 

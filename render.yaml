@@ -5,10 +5,9 @@
 #   1. backend/Dockerfile sets FLASK_DEBUG=1 and runs the reloader, because it
 #      exists for local Compose development. Deploying it would put interactive
 #      tracebacks on the public internet.
-#   2. A Docker service would want rootDir: backend, which leaves database/
-#      outside the build context -- and `flask init-db` needs those files.
-#
-# So rootDir stays at the repository root and gunicorn is pointed into backend/.
+# Gunicorn is pointed into backend/ rather than moving rootDir there, so the
+# repository keeps its shape and database/ stays alongside for the one-off
+# schema load described in docs/DEPLOYMENT.md.
 services:
   - type: web
     name: boat-rental
@@ -34,9 +33,10 @@ services:
       - key: SECRET_KEY
         generateValue: true        # never the "dev" fallback on a public host
       - key: DATABASE_URL
-        sync: false                # paste in the dashboard; never commit it
-      - key: DB_SSL
-        value: "1"                 # managed MySQL requires TLS
+        # Paste in the dashboard; never commit it. TLS goes in this URL too --
+        # SQLAlchemy reads ssl_ca / ssl_cert / ssl_key / ssl_check_hostname
+        # straight out of the query string, so it needs no code.
+        sync: false
       - key: SESSION_COOKIE_SECURE
         value: "1"                 # Render terminates TLS, so the cookie can be Secure
       - key: TZ

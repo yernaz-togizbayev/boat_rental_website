@@ -54,26 +54,6 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
 }
-
-# A free managed MySQL caps connections in the tens, and SQLAlchemy's defaults
-# (5 + 10 overflow) are per worker, so two Gunicorn workers can ask for thirty.
-# Not set for SQLite, whose StaticPool rejects both options outright -- which
-# would take smoke_test.py down with it.
-if not app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite"):
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"].update({
-        "pool_size": 5,
-        "max_overflow": 2,
-    })
-
-# Managed MySQL almost always requires TLS, and a DATABASE_URL alone cannot ask
-# PyMySQL for it. Off by default so the local Compose database is untouched.
-# DB_SSL=1 alone gives an encrypted but unverified connection; point DB_SSL_CA
-# at the provider's ca.pem to verify the certificate too.
-if os.getenv("DB_SSL", "") in ("1", "true", "True"):
-    _ca = os.getenv("DB_SSL_CA")
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["connect_args"] = {
-        "ssl": {"ca": _ca} if _ca else {}
-    }
 db = SQLAlchemy(app)
 
 @app.context_processor
@@ -106,4 +86,3 @@ def format_money(amount):
     return f"€{amount:,.2f}"
 
 from boat_rental import routes  # noqa: E402, F401
-from boat_rental import cli  # noqa: E402, F401

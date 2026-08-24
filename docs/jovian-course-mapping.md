@@ -19,7 +19,7 @@ Live site: *(add your Render URL here)* · Source: this repository
 |---|---|---|
 | **1** | Building web pages with HTML & CSS | 22 Jinja templates plus 3 shared partials in `backend/templates/`, all extending `base.html`. Bootstrap 5 with a 1,089-line custom stylesheet at `backend/static/main.css`. |
 | **2** | Flask templates and cloud deployment | 38 routes in `backend/boat_rental/routes.py`. Template inheritance throughout — one `base.html` carries the navbar, which branches on whether a client or a manager is signed in. Deployment: `render.yaml` + `docs/DEPLOYMENT.md`. |
-| **3** | Setting up & connecting a database | SQLAlchemy models in `backend/boat_rental/models.py` (10 classes over 12 tables). Schema in `database/Group05_Createtable.sql`. Local MariaDB via Docker Compose; managed MySQL in the cloud, built by `flask init-db`. |
+| **3** | Setting up & connecting a database | SQLAlchemy models in `backend/boat_rental/models.py` (10 classes over 12 tables). Schema in `database/Group05_Createtable.sql`. Local MariaDB via Docker Compose; managed MySQL in the cloud. |
 | **4** | Dynamic database-driven web pages | `/booking` (availability over a date range), `/report` (the client's logbook), `/analytics` (per-city figures), and the whole `/manager/*` CRUD surface. |
 | **5** | Using HTML forms to capture data | 12 WTForms classes in `backend/boat_rental/forms.py`, CSRF protection on every POST, server-side revalidation of booking submissions, and a simulated card checkout. |
 
@@ -47,7 +47,7 @@ docker compose up --build     # app on :5000, MariaDB on :3306, MongoDB on :2701
 
 Deployment is in `docs/DEPLOYMENT.md`. The one thing that does not carry over from Compose is
 schema creation: MariaDB's Docker entrypoint builds the database on first boot, and a managed
-cloud database has no entrypoint, so `flask init-db` runs the same SQL against `DATABASE_URL`.
+cloud database has no entrypoint, so the same SQL is loaded once with a MySQL client.
 
 ## Screenshots
 

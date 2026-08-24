@@ -104,17 +104,17 @@ changing the relational data; the migration is one-way and never writes back.
 
 `render.yaml` is a Render blueprint; `docs/DEPLOYMENT.md` is the walkthrough. The only thing that
 does not carry over from Compose is schema creation — MariaDB's entrypoint builds the database on
-first boot and a managed cloud database has no entrypoint, so `flask init-db` runs the same
-graded SQL against whatever `DATABASE_URL` points at:
+first boot, and a managed cloud database has no entrypoint. So you feed the same graded SQL to a
+MySQL client once, in the order `database/init.sql` declares:
 
 ```bash
-cd backend && python -m flask --app app init-db          # create, seed if empty
-cd backend && python -m flask --app app init-db --reset  # drop everything, rebuild
+docker run --rm -i mariadb:11.3 mariadb -h HOST -u USER -pPASS --ssl DB \
+  < database/Group05_Createtable.sql        # then the three Student*_InsertData files
 ```
 
-It executes `database/*.sql` rather than calling `db.create_all()`, so the SQL stays the single
-source of truth for the schema. Note that Render's managed database is PostgreSQL only, so the
-MySQL comes from an external provider.
+The app is not involved: `database/*.sql` stays the one source of truth for the schema, and
+nothing here calls `db.create_all()`. Note that Render's managed database is PostgreSQL only, so
+the MySQL comes from an external provider.
 
 ### 🔁 Useful commands
 
@@ -164,7 +164,7 @@ It does **not** cover the SQL seed scripts; those need MariaDB.
 
 | Path | Description |
 |------|-------------|
-| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py`, `nosql.py`, `cli.py`, `sqlscript.py` |
+| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py`, `nosql.py` |
 | `backend/templates/` | Jinja templates, all extending `base.html` |
 | `backend/static/main.css` | Custom stylesheet on top of Bootstrap |
 | `backend/smoke_test.py` | End-to-end smoke test (SQLite, no Docker needed) |
