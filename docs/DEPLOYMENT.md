@@ -27,6 +27,10 @@ MySQL rather than a wire-compatible substitute. Alwaysdata's free 100 MB MySQL a
 dataset is under 1 MB. Avoid db4free and freesqldatabase; a submitted demo URL that 500s is worse
 than no demo.
 
+**Pick MySQL, not PostgreSQL.** Aiven's free tier offers both, and it is an easy mis-click. This
+app is `mysql+pymysql` end to end and the schema is a graded MySQL artifact, so Postgres would
+mean porting `Group05_Createtable.sql` — which is exactly what must not happen.
+
 Take the connection details and build a URL:
 
 ```
@@ -57,7 +61,9 @@ Feed the graded SQL to the MySQL client in the order MariaDB's entrypoint uses. 
 handles these files natively, comments and all, so there is nothing to install into the app and
 nothing to parse.
 
-There is no `mysql` binary on a typical Windows box, but the MariaDB image has one:
+There is no `mysql` binary on a typical Windows box, but the official image has one. Use the
+**`mysql:8`** client against a cloud provider, not `mariadb`: Aiven runs MySQL 8, whose default
+`caching_sha2_password` auth plugin the MariaDB client cannot always negotiate.
 
 ```bash
 cd /path/to/boat_rental_webapp
@@ -67,10 +73,14 @@ for f in database/Group05_Createtable.sql \
          database/Student1/Student1_InsertData_Harbours.sql \
          database/Student2/Student2_InsertData_Initial.sql; do
   echo "-> $f"
-  docker run --rm -i mariadb:11.3 mariadb \
-    -h HOST -P PORT -u USER -pPASSWORD --ssl DBNAME < "$f"
+  docker run --rm -i mysql:8 mysql \
+    -h HOST -P PORT -u avnadmin -pPASSWORD \
+    --ssl-mode=REQUIRED defaultdb < "$f"
 done
 ```
+
+(For the *local* MariaDB, `docker run --rm -i mariadb:11.3 mariadb -h db ...` on the compose
+network is the equivalent — that is the pairing this was verified against.)
 
 Order matters: the schema first, then Student1 (which owns the shared `Office` rows), then
 Student2. That order is what `database/init.sql` declares — but do not run `init.sql` itself, as
@@ -82,7 +92,8 @@ keys. To start over, drop the tables and repeat.
 Verify:
 
 ```bash
-docker run --rm -i mariadb:11.3 mariadb -h HOST -P PORT -u USER -pPASSWORD --ssl DBNAME \
+docker run --rm -i mysql:8 mysql -h HOST -P PORT -u avnadmin -pPASSWORD \
+  --ssl-mode=REQUIRED defaultdb \
   -e "SELECT COUNT(*) FROM Office; SELECT COUNT(*) FROM Boat;"
 ```
 
