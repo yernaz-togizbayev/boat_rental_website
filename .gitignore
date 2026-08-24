@@ -234,3 +234,4 @@ compose.override.yml
 *.nav
 *.snm
 *.vrb
+*-eps-converted-to.pdf

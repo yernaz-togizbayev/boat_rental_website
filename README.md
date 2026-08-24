@@ -137,8 +137,8 @@ It does **not** cover the SQL seed scripts; those need MariaDB.
 | `backend/static/main.css` | Custom stylesheet on top of Bootstrap |
 | `backend/smoke_test.py` | End-to-end smoke test (SQLite, no Docker needed) |
 | `database/` | Graded SQL: shared `CREATE TABLE`s plus per-student insert and query scripts |
-| `docs/` | Graded deliverables: ER diagram, NoSQL designs, SQL screenshots |
-| `Group05_MS1.pdf` | Milestone 1 report |
+| `docs/` | Graded deliverables: ER diagram, NoSQL designs, SQL screenshots, UML activity diagrams |
+| `docs/reports/` | Milestone reports and the slide deck — PDF plus the LaTeX source of each |
 
 ```text
 boat_rental_webapp/
@@ -156,7 +156,11 @@ boat_rental_webapp/
 ├── docs/
 │   ├── ER-diagram/
 │   ├── json/
-│   └── SQLexecution_screenshots/
+│   ├── SQLexecution_screenshots/
+│   ├── UML/
+│   ├── assets/
+│   ├── reports/
+│   └── slides/
 ├── docker-compose.yml
 └── README.md
 ```
@@ -179,7 +183,25 @@ Two details about `database/` that are easy to trip over:
 | Use-case & analytics SQL | `database/Student1/`, `database/Student2/` |
 | SQL execution screenshots | `docs/SQLexecution_screenshots/` |
 | NoSQL designs | `docs/json/NoSQLDesign_IG.json`, `docs/json/NoSQLDesign_TY.json` |
-| Milestone 1 report | `Group05_MS1.pdf` |
+| UML activity diagrams | `docs/UML/` |
+| Milestone 1 report | `docs/reports/Group05_MS1.pdf` · source `Group05_MS1.tex` |
+| Milestone 2 report | `docs/reports/Group05_MS2.pdf` · source `Group05_MS2.tex` |
+| Milestone 2 presentation | `docs/reports/Group05_MS2_Presentation.pdf` · source `…_Presentation.tex` |
+
+### Rebuilding a report
+
+The `.tex` sources reference images by **repository-root-relative** paths
+(`docs/ER-diagram/er_diagram.jpg`, `docs/assets/univienna-logo.eps`), so they must be compiled from
+the repository root, not from `docs/reports/`. The university logo is an EPS, which needs
+`-shell-escape` so `epstopdf` can convert it:
+
+```bash
+mkdir -p .build      # pdflatex will not create the output directory itself
+pdflatex -shell-escape -output-directory=.build docs/reports/Group05_MS1.tex   # ×3, for the ToC
+```
+
+Three passes: the first writes the table of contents and the `lastpage` label, the later ones
+resolve the page numbers that depend on them.
 
 ---
 
