@@ -17,7 +17,7 @@ offices, the staff and the bookings behind it.
 - Relational design: IS-A hierarchies, a weak entity, unary and m:n relationships
 - Hand-written SQL for schema, seed data and analytics
 - A use-case driven web implementation over that schema
-- A NoSQL (document) redesign of the same data
+- A NoSQL (document) redesign of the same data, migrated into a live MongoDB and queried from the app
 
 ---
 
@@ -44,6 +44,12 @@ offices, the staff and the bookings behind it.
   - What is free in a harbour over a date range, with fleet-wide figures alongside
   - Type-ahead harbour filter
 
+- 🍃 **NoSQL Migration** *(manager)*:
+  - One button rebuilds three MongoDB collections from the relational data, embedding each use
+    case's answer into a single document
+  - Both analytics reports run against Mongo alongside their SQL originals
+  - An index page times each query with and without its index, using `explain`
+
 - 🌱 **Demo Data**:
   - One button refills boats, clients, employees and rentals — and keeps any harbours you added
 
@@ -53,7 +59,8 @@ offices, the staff and the bookings behind it.
 
 - Python 3 · Flask · Jinja2
 - SQLAlchemy (hand-maintained models, no migrations)
-- MariaDB 11.3
+- MariaDB 11.3 — the system of record
+- MongoDB 7 · PyMongo — the document redesign, rebuilt from MariaDB on demand
 - Flask-WTF / WTForms with CSRF protection
 - Bootstrap 5 + a custom admiralty-chart stylesheet
 - Docker Compose
@@ -72,7 +79,8 @@ Docker is the only prerequisite — Python, Flask and MariaDB all run inside the
 docker compose up --build
 ```
 
-Then open <http://localhost:5000>. MariaDB is exposed on `3306`.
+This starts three containers: the app, MariaDB and MongoDB. Then open <http://localhost:5000>.
+MariaDB is exposed on `3306` and MongoDB on `27017`, both on loopback only.
 
 ### 3️⃣ Sign in
 
@@ -85,6 +93,12 @@ see [Notes](#-notes).
 A fresh database is seeded by the SQL in `database/`. If the app looks empty, or you want a bigger
 fleet to click around, use the **Demo data** panel at the top of any page. It works without signing
 in, can be run repeatedly, and keeps any harbours you have added.
+
+### 5️⃣ Populate MongoDB *(optional)*
+
+MongoDB starts empty — nothing fills it automatically. Sign in as a manager and use **Migrate** on
+`/manager/nosql` to rebuild the collections from whatever is currently in MariaDB. Re-run it after
+changing the relational data; the migration is one-way and never writes back.
 
 ### 🔁 Useful commands
 
@@ -102,7 +116,9 @@ Everything has a working default; a `.env` file in the repository root can overr
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `TZ` | `Europe/Vienna` | Both containers. Payment deadlines are naive `DATETIME`s, so the app, MariaDB and the clock on the wall have to agree. |
+| `TZ` | `Europe/Vienna` | All three containers. Payment deadlines are naive `DATETIME`s, so the app, MariaDB and the clock on the wall have to agree. |
+| `MONGO_URI` | `mongodb://mongo:27017/` | The document database. Unreachable Mongo degrades the NoSQL pages only; the rest of the app is unaffected. |
+| `MONGO_DB` | `boatdb` | Database holding the `offices`, `managers` and `clients` collections. |
 | `UNSPLASH_ACCESS_KEY` | *(unset)* | Optional. Fetches a photo for a harbour with no hand-picked image. Without it there is a Wikipedia lookup and then a generic pool. |
 | `IMAGE_FETCH` | `on` | Set to `off` to skip all outbound image lookups and run fully offline. |
 | `SECRET_KEY` | `dev` | Flask session signing. |
@@ -132,7 +148,7 @@ It does **not** cover the SQL seed scripts; those need MariaDB.
 
 | Path | Description |
 |------|-------------|
-| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py` |
+| `backend/boat_rental/` | The Flask app: `models.py`, `routes.py`, `forms.py`, `generator.py`, `images.py`, `assignments.py`, `nosql.py` |
 | `backend/templates/` | Jinja templates, all extending `base.html` |
 | `backend/static/main.css` | Custom stylesheet on top of Bootstrap |
 | `backend/smoke_test.py` | End-to-end smoke test (SQLite, no Docker needed) |
@@ -183,6 +199,7 @@ Two details about `database/` that are easy to trip over:
 | Use-case & analytics SQL | `database/Student1/`, `database/Student2/` |
 | SQL execution screenshots | `docs/SQLexecution_screenshots/` |
 | NoSQL designs | `docs/json/NoSQLDesign_IG.json`, `docs/json/NoSQLDesign_TY.json` |
+| NoSQL implementation | `backend/boat_rental/nosql.py` — migration, both reports, index benchmark |
 | UML activity diagrams | `docs/UML/` |
 | Milestone 1 report | `docs/reports/Group05_MS1.pdf` · source `Group05_MS1.tex` |
 | Milestone 2 report | `docs/reports/Group05_MS2.pdf` · source `Group05_MS2.tex` |
@@ -219,9 +236,15 @@ These are deliberate decisions, not loose ends:
   job, because a search is the moment the answer has to be honest.
 - **No migrations.** `models.py` is a hand-maintained mirror of `Group05_Createtable.sql`; a column
   added to one must be added to the other.
-- **Both published ports listen on `127.0.0.1` only**, so the app and the database are reachable
+- **The migration is one-way.** MariaDB stays the system of record; `/manager/nosql` rebuilds the
+  collections from it and never writes back, so nothing in normal use can leave the two databases
+  disagreeing. Rentals are stored twice in Mongo — under the boat and under the client — which is
+  what makes both reports single-document reads, and the cost of that duplication falls entirely
+  on the migration.
+- **All three published ports listen on `127.0.0.1` only**, so the app and the databases are reachable
   from the machine running them and nowhere else. This is a development server with the reloader
-  on, and the database has a known root password; neither belongs on a shared network. To reach it
+  on, MariaDB has a known root password and Mongo runs unauthenticated; none of that belongs on a
+  shared network. To reach it
   from another device, publish `5000:5000` for that session.
 - **Cancelling a paid charter keeps the row** as `CANCELLED` rather than deleting it, so the record
   that money changed hands survives.
