@@ -329,7 +329,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
    way that reading a boat's horsepower is not. */
 .harbours {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: .6rem;
   margin-bottom: 1.5rem;
 }
@@ -1086,4 +1086,5 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   .soundings { gap: 0 1.25rem; }
   .site-header .navbar-nav .nav-link.is-current { box-shadow: inset 2px 0 0 var(--magenta); }
   .seed-notice { align-items: flex-start; }
+  .harbours { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 }
