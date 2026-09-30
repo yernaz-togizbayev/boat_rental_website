@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{# The public front door. Deliberately touches no database, so it still
+   renders while a free-tier database is waking up. #}
+{% block seed_notice %}{% endblock %}
+
+{% block body %}
+<section class="landing-hero rise">
+  <img class="landing-photo" src="{{ url_for('static', filename='img/hero.jpg') }}" alt="">
+  <div class="landing-scrim"></div>
+
+  <div class="landing-body">
+    <p class="eyebrow">Life is better on the water</p>
+    <h1>Rent a boat <span>Create memories</span></h1>
+    <p>Yachts, catamarans and motorboats in harbours around the world. Explore the fleet and book your next adventure today.</p>
+    <div class="landing-actions">
+      <a class="btn btn-success btn-lg" href="{{ url_for('login') }}">Browse boats <i class="bi bi-arrow-right ms-1"></i></a>
+      <a class="btn btn-secondary btn-lg" href="{{ url_for('register_client') }}">Create an account</a>
+    </div>
+  </div>
+</section>
+
+<section class="feature-row rise">
+  <div class="feature">
+    <span class="feature-icon"><i class="bi bi-compass"></i></span>
+    <div>
+      <h2>Wide selection</h2>
+      <p>Boats for every adventure</p>
+    </div>
+  </div>
+  <div class="feature">
+    <span class="feature-icon"><i class="bi bi-calendar2-check"></i></span>
+    <div>
+      <h2>Easy booking</h2>
+      <p>Pick a harbour, dates and boat</p>
+    </div>
+  </div>
+  <div class="feature">
+    <span class="feature-icon"><i class="bi bi-shield-check"></i></span>
+    <div>
+      <h2>Live availability</h2>
+      <p>If it's listed, it's yours</p>
+    </div>
+  </div>
+</section>
+
+<p class="landing-tagline">“More adventures on the water.”</p>
+{% endblock %}

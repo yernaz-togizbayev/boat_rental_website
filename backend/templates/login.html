@@ -2,14 +2,14 @@
 
 {% block body %}
 <div class="auth-wrap">
-  <div class="page-head">
-    <p class="eyebrow">Sign in</p>
-    <h1>Who's sailing?</h1>
-    <p>This demo has no passwords — pick your name to continue.
-       New here? <a href="{{ url_for('register_client') }}">Create an account</a>.</p>
-  </div>
+  <div class="auth-card rise">
+    <div class="auth-head">
+      {% with mark_size = 64 %}{% include "partials/brand_mark.html" %}{% endwith %}
+      <p class="brand-name">Boat Rental <span>Company</span></p>
+      <h1>Welcome back</h1>
+      <p>This demo has no passwords — pick your name to continue.</p>
+    </div>
 
-  <div class="content-section rise">
     {% if clients %}
     <ul class="client-list">
       {% for c in clients %}
@@ -28,6 +28,8 @@
          <a href="{{ url_for('register_client') }}">register the first client</a>.</p>
     </div>
     {% endif %}
+
+    <p class="auth-foot">New here? <a href="{{ url_for('register_client') }}">Create an account</a></p>
   </div>
 </div>
 {% endblock %}

@@ -102,7 +102,14 @@ def manager_required(f):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    return redirect(url_for("login"))
+    """Public landing page; anyone already signed in goes straight to /home.
+
+    Renders without the database on purpose, like /credits, so the front page
+    still appears while a sleeping free-tier database is waking up.
+    """
+    if "client" in session or "manager" in session:
+        return redirect(url_for("home"))
+    return render_template("landing.html")
 
 
 @app.route("/login")

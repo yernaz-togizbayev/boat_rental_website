@@ -1,32 +1,33 @@
 /* ==========================================================================
    Boat rental: visual system
 
-   Direction: admiralty chart. Chart paper ground, ink line work, shallow-water
-   cyan, and chart magenta. On a real nautical chart magenta marks lights,
-   cautions and restricted areas; here it carries every committing or
-   destructive action.
+   Direction: bright marina. White surfaces on a pale sky ground, deep navy
+   type, and one clear sea blue that carries every committing action. Red is
+   kept for the destructive ones only, so it still means something.
 
    Loaded after Bootstrap, so single-class overrides below win on cascade
    order without needing !important or specificity hacks.
    ========================================================================== */
 
 :root {
-  /* Chart palette */
-  --ink:        #0a2333;  /* line work, body text, nav */
-  --ink-soft:   #163a50;
-  --paper:      #edf1f2;  /* chart paper: cool grey, deliberately not cream */
-  --surface:    #ffffff;  /* deep water: cards, tables */
-  --shallow:    #c9e7ea;  /* shallow-water fill: informational states */
-  --shallow-dp: #7fc4cc;
-  --sound:      #5c7a8a;  /* soundings: secondary text */
-  --hairline:   #d4dee1;
-  --magenta:    #c81e64;  /* chart magenta: commit + caution */
-  --magenta-dk: #a3164f;
-  --buff:       #e7dcc6;  /* land: warning fills */
+  /* Marina palette */
+  --ink:        #0c2340;  /* navy: body text, headings, brand */
+  --ink-soft:   #1b3a63;
+  --paper:      #f2f6fb;  /* page ground: pale sky */
+  --surface:    #ffffff;  /* cards, tables */
+  --shallow:    #e1eefb;  /* light blue fill: informational states, icon tiles */
+  --shallow-dp: #93c1ea;
+  --sound:      #5a6b80;  /* secondary text */
+  --hairline:   #dde6f0;
+  --accent:     #1667b7;  /* sea blue: commit, current, focus */
+  --accent-dk:  #0f5299;
+  --danger:     #c2362f;  /* destructive + errors only */
+  --danger-dk:  #9f2a24;
+  --buff:       #f3e6c8;  /* warning fills */
 
-  /* Type */
-  --display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --ui:      "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Type. Mono only for figures that have to line up in columns. */
+  --display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --ui:      "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --step--2: 0.6875rem;
@@ -36,10 +37,11 @@
   --step-2:  1.375rem;
   --step-3:  1.875rem;
 
-  --radius:    10px;
-  --radius-sm: 6px;
-  --shadow:    0 1px 2px rgba(10, 35, 51, .06), 0 8px 24px -12px rgba(10, 35, 51, .18);
-  --shadow-lg: 0 2px 4px rgba(10, 35, 51, .06), 0 24px 48px -20px rgba(10, 35, 51, .28);
+  --radius:    16px;
+  --radius-sm: 10px;
+  --pill:      999px;
+  --shadow:    0 1px 2px rgba(12, 35, 64, .05), 0 10px 28px -14px rgba(12, 35, 64, .22);
+  --shadow-lg: 0 2px 4px rgba(12, 35, 64, .05), 0 28px 56px -24px rgba(12, 35, 64, .32);
 }
 
 /* --------------------------------------------------------------------------
@@ -72,7 +74,7 @@ h3 { font-size: var(--step-1); }
 h4, h5, h6 { font-size: var(--step-0); }
 
 a { color: var(--ink); text-decoration-color: var(--shallow-dp); text-underline-offset: 3px; }
-a:hover { color: var(--magenta); text-decoration-color: currentColor; }
+a:hover { color: var(--accent); text-decoration-color: currentColor; }
 
 .text-muted { color: var(--sound) !important; }
 
@@ -81,7 +83,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
 :focus-visible {
-  outline: 2px solid var(--magenta);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 3px;
 }
@@ -102,54 +104,65 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
    Applies to the search results the booking page jumps to after a search. */
 #search-results { scroll-margin-top: 4.5rem; }
 .site-header .navbar {
-  background: var(--ink) !important;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, .94) !important;
+  backdrop-filter: saturate(1.4) blur(8px);
+  padding: .6rem 0;
+  border-bottom: 1px solid var(--hairline);
+  box-shadow: 0 6px 20px -16px rgba(12, 35, 64, .35);
 }
 
-.navbar-brand.chart-brand {
+/* Wordmark in two tones, as on the logo: navy name, blue "Company". */
+.navbar-brand.brand {
   display: inline-flex;
   align-items: center;
-  gap: .55rem;
+  gap: .6rem;
   font-family: var(--display);
   font-weight: 800;
-  font-size: 1.0625rem;
-  letter-spacing: -0.03em;
-  color: #fff;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
+  color: var(--ink);
   padding: 0;
 }
-.navbar-brand.chart-brand:hover { color: #fff; }
-.chart-brand .rose { color: var(--magenta); display: block; }
-.chart-brand .rose svg { display: block; }
+.navbar-brand.brand:hover { color: var(--ink); }
+.brand .brand-mark { display: block; color: var(--ink); }
+.brand .brand-mark svg { display: block; }
+.brand .brand-accent { color: var(--accent); }
 
 .site-header .navbar-nav .nav-link {
-  color: #a9c2ce;
+  color: var(--ink-soft);
   font-size: var(--step--1);
-  font-weight: 500;
-  padding: .35rem .7rem;
-  border-radius: var(--radius-sm);
+  font-weight: 600;
+  padding: .4rem .75rem;
+  border-radius: var(--pill);
   transition: color .15s ease, background-color .15s ease;
 }
 .site-header .navbar-nav .nav-link:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, .07);
+  color: var(--accent);
+  background: var(--shallow);
 }
-/* The magenta underline is the only accent in the bar. It marks where you are. */
+/* Where you are: blue, on a light blue pill. */
 .site-header .navbar-nav .nav-link.is-current {
-  color: #fff;
-  box-shadow: inset 0 -2px 0 var(--magenta);
-  border-radius: 0;
+  color: var(--accent);
+  background: var(--shallow);
 }
+/* The one solid button in the bar, like "Login" on the mock-up. */
+.site-header .navbar-nav .nav-link.nav-cta {
+  color: #fff;
+  background: var(--accent);
+  padding: .4rem 1.1rem;
+  margin-left: .35rem;
+}
+.site-header .navbar-nav .nav-link.nav-cta:hover { background: var(--accent-dk); color: #fff; }
 .site-header .navbar-nav .nav-role {
-  color: #7d99a8;
-  font-family: var(--mono);
+  color: var(--sound);
   font-size: var(--step--2);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .08em;
-  padding: .35rem .7rem;
+  padding: .4rem .75rem;
 }
 .navbar-toggler {
-  border-color: rgba(255, 255, 255, .18);
+  border-color: var(--hairline);
   padding: .25rem .5rem;
 }
 
@@ -169,7 +182,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
 }
 .site-footer p {
   margin: 0;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   letter-spacing: .04em;
   color: var(--sound);
@@ -190,11 +203,12 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
 /* Page header band: eyebrow reads as a chart legend caption. */
 .page-head { margin-bottom: 1.5rem; }
 .page-head .eyebrow {
-  font-family: var(--mono);
+  font-weight: 700;
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .14em;
-  color: var(--sound);
+  color: var(--accent);
   margin: 0 0 .35rem;
 }
 .page-head h1, .page-head h2 { margin: 0; }
@@ -316,7 +330,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
 .sounding .figure.is-null { color: var(--hairline); }
 .sounding .unit {
   display: block;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -344,8 +358,11 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   overflow: hidden;
   cursor: pointer;
   /* Tinted panel behind the photo, which is what shows if the lookup failed
-     or the image is still loading, so a card is never an empty hole. */
-  background: linear-gradient(160deg, var(--ink-soft), var(--ink));
+     or the image is still loading, so a card is never an empty hole. With
+     IMAGE_FETCH=off (production) this is all there is, so it is sea, not ink. */
+  background:
+    radial-gradient(120% 70% at 85% 0%, rgba(255, 255, 255, .28), transparent 60%),
+    linear-gradient(165deg, #4f9be0 0%, var(--accent) 45%, var(--ink-soft) 100%);
   transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
 }
 .harbour img {
@@ -361,7 +378,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10, 35, 51, .88) 8%, rgba(10, 35, 51, .1) 62%);
+  background: linear-gradient(to top, rgba(12, 35, 64, .88) 8%, rgba(12, 35, 64, .1) 62%);
 }
 .harbour-label {
   position: absolute;
@@ -369,7 +386,7 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   right: .7rem;
   bottom: .6rem;
   z-index: 1;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -385,13 +402,13 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   font-size: var(--step--2);
   letter-spacing: .08em;
   opacity: .8;
-  text-shadow: 0 1px 3px rgba(10, 35, 51, .9);
+  text-shadow: 0 1px 3px rgba(12, 35, 64, .9);
 }
 .harbour:hover { border-color: var(--shallow-dp); transform: translateY(-2px); box-shadow: var(--shadow); }
 .harbour:hover img { opacity: .9; transform: scale(1.04); }
 .harbour.is-picked {
-  border-color: var(--magenta);
-  box-shadow: 0 0 0 2px rgba(200, 30, 100, .25);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(22, 103, 183, .25);
 }
 .harbour.is-picked img { opacity: .95; }
 
@@ -405,17 +422,17 @@ a:hover { color: var(--magenta); text-decoration-color: currentColor; }
   top: .5rem;
   left: .7rem;
   z-index: 1;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   letter-spacing: .06em;
   color: #fff;
-  background: rgba(10, 35, 51, .8);
+  background: rgba(12, 35, 64, .8);
   border-radius: 3px;
   padding: .1rem .35rem;
 }
 
 .photo-credit {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   color: var(--sound);
   margin: -1rem 0 1.5rem;
@@ -468,9 +485,9 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   z-index: 1;
   opacity: 0;
   transform: translateY(-4px);
-  background: var(--magenta);
+  background: var(--accent);
   color: #fff;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -482,13 +499,13 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 .plate-radio:checked ~ .plate-tick { opacity: 1; transform: none; }
 
 .spec-plate:has(.plate-radio:checked) {
-  border-color: var(--magenta);
-  box-shadow: 0 0 0 2px rgba(200, 30, 100, .22), var(--shadow);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(22, 103, 183, .22), var(--shadow);
 }
-.spec-plate:has(.plate-radio:checked)::before { background: var(--magenta); }
+.spec-plate:has(.plate-radio:checked)::before { background: var(--accent); }
 
 .spec-plate:has(.plate-radio:focus-visible) {
-  outline: 2px solid var(--magenta);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -503,7 +520,7 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 }
 .book-hint {
   margin: 0 auto 0 0;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -521,7 +538,7 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   text-align: right;
   font-size: var(--step-0);
   font-weight: 600;
-  color: var(--magenta);
+  color: var(--danger);
 }
 .book-error[hidden] { display: none; }
 
@@ -590,13 +607,13 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   left: 50%;
   transform: translate(-50%, -50%) rotate(-4deg);
   z-index: 2;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--1);
   text-transform: uppercase;
   letter-spacing: .18em;
   color: #fff;
   /* Translucent, so the boat still reads underneath the stamp. */
-  background: rgba(10, 35, 51, .72);
+  background: rgba(12, 35, 64, .72);
   border: 1px solid rgba(255, 255, 255, .5);
   border-radius: 3px;
   padding: .3rem .8rem;
@@ -643,20 +660,20 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   min-width: 4ch;
 }
 .hold-label {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--1);
   text-transform: uppercase;
   letter-spacing: .1em;
   color: var(--sound);
 }
-.hold-timer.is-urgent .hold-clock { color: var(--magenta); }
+.hold-timer.is-urgent .hold-clock { color: var(--danger); }
 .hold-timer.is-expired .hold-clock,
-.hold-timer.is-expired .hold-label { color: var(--magenta); }
+.hold-timer.is-expired .hold-label { color: var(--danger); }
 
 /* Checkout summary */
 .charter-summary { display: grid; grid-template-columns: auto 1fr; gap: .45rem 1rem; margin: 0; }
 .charter-summary dt {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -680,7 +697,7 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 
 /* --------------------------------------------------------------------------
    Buttons
-   magenta solid = commit · magenta outline = caution · ink = navigate
+   blue solid = commit · red outline = destructive · navy = navigate
    -------------------------------------------------------------------------- */
 
 .btn {
@@ -688,20 +705,20 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   font-size: var(--step--1);
   font-weight: 600;
   letter-spacing: -0.005em;
-  border-radius: var(--radius-sm);
-  padding: .5rem 1rem;
+  border-radius: var(--pill);
+  padding: .55rem 1.15rem;
   border-width: 1px;
   transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
 }
 .btn:active { transform: translateY(1px); }
-.btn-lg { font-size: var(--step-0); padding: .7rem 1.4rem; }
-.btn-sm { font-size: var(--step--2); padding: .3rem .6rem; }
+.btn-lg { font-size: var(--step-0); padding: .75rem 1.6rem; }
+.btn-sm { font-size: var(--step--2); padding: .3rem .7rem; }
 
 .btn-primary { background: var(--ink); border-color: var(--ink); color: #fff; }
 .btn-primary:hover, .btn-primary:focus { background: var(--ink-soft); border-color: var(--ink-soft); color: #fff; }
 
-.btn-success { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-.btn-success:hover, .btn-success:focus { background: var(--magenta-dk); border-color: var(--magenta-dk); color: #fff; }
+.btn-success { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-success:hover, .btn-success:focus { background: var(--accent-dk); border-color: var(--accent-dk); color: #fff; }
 
 .btn-secondary { background: transparent; border-color: var(--hairline); color: var(--ink); }
 .btn-secondary:hover, .btn-secondary:focus { background: var(--paper); border-color: var(--sound); color: var(--ink); }
@@ -712,19 +729,17 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 .btn-outline-success { border-color: var(--shallow-dp); color: var(--ink); background: transparent; }
 .btn-outline-success:hover { background: var(--shallow); border-color: var(--shallow-dp); color: var(--ink); }
 
-.btn-outline-danger { border-color: rgba(200, 30, 100, .35); color: var(--magenta); background: transparent; }
-.btn-outline-danger:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.btn-outline-danger { border-color: rgba(194, 54, 47, .35); color: var(--danger); background: transparent; }
+.btn-outline-danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 /* --------------------------------------------------------------------------
    Forms
    -------------------------------------------------------------------------- */
 
 .form-label {
-  font-family: var(--mono);
-  font-size: var(--step--2);
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  color: var(--sound);
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-soft);
   margin-bottom: .35rem;
 }
 
@@ -732,15 +747,16 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
   font-family: var(--ui);
   font-size: var(--step-0);
   color: var(--ink);
-  background-color: var(--surface);
+  background-color: #f7fafd;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
-  padding: .5rem .7rem;
+  padding: .55rem .8rem;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .form-control:focus, .form-select:focus {
+  background-color: var(--surface);
   border-color: var(--shallow-dp);
-  box-shadow: 0 0 0 3px rgba(127, 196, 204, .3);
+  box-shadow: 0 0 0 3px rgba(147, 193, 234, .3);
   outline: none;
 }
 /* Bootstrap reserves this space for the chevron; the padding shorthand above
@@ -748,7 +764,7 @@ label.spec-plate { display: block; cursor: pointer; margin: 0; }
 .form-select { padding-right: 2.25rem; }
 .form-control::placeholder { color: #9db2bc; }
 input[type="date"].form-control { font-family: var(--mono); font-size: var(--step--1); }
-.form-check-input:checked { background-color: var(--magenta); border-color: var(--magenta); }
+.form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
 
 /* --------------------------------------------------------------------------
    Tables: hairline rules, micro-caps headers, mono figures
@@ -762,17 +778,17 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   font-size: var(--step--1);
   margin-bottom: 0;
   --bs-table-bg: transparent;
-  --bs-table-striped-bg: rgba(237, 241, 242, .7);
+  --bs-table-striped-bg: rgba(242, 246, 251, .7);
   --bs-table-striped-color: var(--ink);
 }
 .table > thead > tr > th {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: .1em;
   color: var(--sound);
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--hairline);
   padding: .5rem .75rem;
   white-space: nowrap;
 }
@@ -782,14 +798,14 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   vertical-align: middle;
 }
 .table > tbody > tr:last-child > td { border-bottom: 0; }
-.table > tbody > tr:hover { --bs-table-accent-bg: rgba(201, 231, 234, .4); }
+.table > tbody > tr:hover { --bs-table-accent-bg: rgba(225, 238, 251, .4); }
 
 /* --------------------------------------------------------------------------
    Badges, alerts, empty states
    -------------------------------------------------------------------------- */
 
 .badge {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   font-weight: 500;
   text-transform: uppercase;
@@ -798,10 +814,10 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   border-radius: 4px;
 }
 .badge.bg-success  { background: var(--shallow) !important; color: #12525c !important; }
-.badge.bg-primary  { background: rgba(10, 35, 51, .08) !important; color: var(--ink) !important; }
+.badge.bg-primary  { background: rgba(12, 35, 64, .08) !important; color: var(--ink) !important; }
 .badge.bg-warning  { background: var(--buff) !important; color: #6b5322 !important; }
 .badge.bg-secondary{ background: var(--paper) !important; color: var(--sound) !important; }
-.badge.bg-danger   { background: rgba(200, 30, 100, .12) !important; color: var(--magenta-dk) !important; }
+.badge.bg-danger   { background: rgba(194, 54, 47, .1) !important; color: var(--danger-dk) !important; }
 
 .alert {
   border: 1px solid var(--hairline);
@@ -817,10 +833,10 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 .alert-dismissible { padding-right: 3rem; }
 .alert h4, .alert h5, .alert h6 { font-size: var(--step-0); margin-bottom: .3rem; }
 .alert p:last-child { margin-bottom: 0; }
-.alert-success { border-left-color: var(--shallow-dp); background: rgba(201, 231, 234, .3); }
+.alert-success { border-left-color: var(--shallow-dp); background: rgba(225, 238, 251, .3); }
 .alert-info    { border-left-color: var(--sound); background: var(--paper); }
 .alert-warning { border-left-color: #c8a34a; background: rgba(231, 220, 198, .45); }
-.alert-danger  { border-left-color: var(--magenta); background: rgba(200, 30, 100, .06); }
+.alert-danger  { border-left-color: var(--danger); background: rgba(194, 54, 47, .06); }
 
 .flash-stack { margin-bottom: 1.25rem; }
 
@@ -850,7 +866,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   display: block;
 }
 .stat .label {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -858,11 +874,11 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   margin-top: .45rem;
   display: block;
 }
-.stat.is-accent { border-color: rgba(200, 30, 100, .25); }
-.stat.is-accent .figure { color: var(--magenta); }
+.stat.is-accent { border-color: rgba(22, 103, 183, .25); }
+.stat.is-accent .figure { color: var(--accent); }
 
 /* --------------------------------------------------------------------------
-   Hero: isobath field behind the type
+   Signed-in hero: rotating harbour photos under a navy scrim
    -------------------------------------------------------------------------- */
 
 .chart-hero {
@@ -902,7 +918,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   right: clamp(1rem, 3vw, 2rem);
   bottom: clamp(1rem, 3vw, 1.75rem);
   margin: 0;
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .14em;
@@ -910,7 +926,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
      photo washes out. It measured 2.9 even before the photo was brightened;
      the paler ink and the shadow together put it back above the 3.0 floor. */
   color: #e2eff4;
-  text-shadow: 0 1px 3px rgba(10, 35, 51, .85);
+  text-shadow: 0 1px 3px rgba(12, 35, 64, .85);
 }
 .chart-hero .hero-place:not(:empty)::before {
   content: "";
@@ -919,7 +935,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   height: 1px;
   margin-right: .5rem;
   vertical-align: middle;
-  background: var(--magenta);
+  background: var(--accent);
 }
 .chart-hero .hero-scrim {
   position: absolute;
@@ -932,16 +948,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
      under the glyphs, where it is needed, instead of dimming the whole band.
      Measured across eight hero images, white text on the worst pixel here
      reads 7.1 against a 4.5 floor. */
-  background: linear-gradient(100deg, rgba(10, 35, 51, .65) 12%, rgba(10, 35, 51, .42) 62%, rgba(10, 35, 51, .36) 100%);
-}
-.chart-hero .isobaths {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
-  opacity: .3;
-  pointer-events: none;
+  background: linear-gradient(100deg, rgba(12, 35, 64, .65) 12%, rgba(12, 35, 64, .42) 62%, rgba(12, 35, 64, .36) 100%);
 }
 .chart-hero .hero-body {
   padding: clamp(2rem, 5vw, 3.5rem);
@@ -950,23 +957,24 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
      eyebrow, headline, paragraph and harbour chips are all covered by one
      rule. Two shadows: a wide soft one to lift the glyphs off a busy photo,
      and a tight one so thin strokes keep an edge. */
-  text-shadow: 0 2px 12px rgba(10, 35, 51, .85), 0 1px 2px rgba(10, 35, 51, .55);
+  text-shadow: 0 2px 12px rgba(12, 35, 64, .85), 0 1px 2px rgba(12, 35, 64, .55);
 }
 /* The button has its own solid fill, so a shadow on its label just smudges. */
 .chart-hero .hero-body .btn { text-shadow: none; }
 .chart-hero .eyebrow {
-  font-family: var(--mono);
+  font-weight: 700;
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .16em;
-  color: var(--shallow);
+  color: #bcdcfb;
   margin: 0 0 .9rem;
 }
 .chart-hero h1 {
   font-family: var(--display);
   font-weight: 800;
   font-size: clamp(2rem, 5.2vw, 3.25rem);
-  letter-spacing: -0.035em;
+  letter-spacing: -0.025em;
   line-height: 1.02;
   color: #fff;
   margin: 0 0 .8rem;
@@ -988,7 +996,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   border-top: 1px solid rgba(255, 255, 255, .14);
 }
 .ports .port {
-  font-family: var(--mono);
+  font-family: var(--ui);
   font-size: var(--step--2);
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -1031,7 +1039,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 }
 .client-list a:hover {
   border-color: var(--shallow-dp);
-  background: rgba(201, 231, 234, .22);
+  background: rgba(225, 238, 251, .22);
   transform: translateX(2px);
   color: var(--ink);
 }
@@ -1042,7 +1050,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   letter-spacing: .04em;
 }
 
-/* Seed panel: a notice, not a wall. Magenta because it rewrites everything. */
+/* Seed panel: a notice, not a wall. */
 .seed-notice {
   display: flex;
   align-items: center;
@@ -1051,7 +1059,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   flex-wrap: wrap;
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-left: 3px solid var(--magenta);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius-sm);
   padding: .85rem 1.1rem;
   margin-bottom: 1.25rem;
@@ -1059,6 +1067,155 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
 .seed-notice p { margin: 0; font-size: var(--step--1); color: var(--sound); }
 .seed-notice strong { color: var(--ink); display: block; font-size: var(--step-0); }
 .seed-notice form { margin: 0; flex-shrink: 0; }
+
+/* --------------------------------------------------------------------------
+   Landing page: the public front door at /
+   -------------------------------------------------------------------------- */
+
+/* Dark type on a bright photo, the reverse of the signed-in hero. The white
+   wash runs in from the left where the copy sits and is gone by the time it
+   reaches the boat, which object-position keeps on the right. */
+.landing-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius);
+  min-height: clamp(26rem, 58vh, 34rem);
+  display: flex;
+  align-items: center;
+  background: var(--shallow);
+  box-shadow: var(--shadow-lg);
+}
+.landing-hero .landing-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 72% 60%;
+}
+.landing-hero .landing-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .86) 40%, rgba(255, 255, 255, 0) 70%);
+}
+.landing-body {
+  padding: clamp(2rem, 5vw, 3.75rem);
+  padding-bottom: clamp(4.5rem, 8vw, 5.5rem);   /* room for the overlapping feature cards */
+  max-width: 36rem;
+}
+.landing-body .eyebrow {
+  font-size: var(--step--2);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  color: var(--accent);
+  margin: 0 0 1rem;
+}
+.landing-body h1 {
+  font-weight: 800;
+  font-size: clamp(2.25rem, 5.4vw, 3.5rem);
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+  margin: 0 0 1rem;
+}
+.landing-body h1 span { display: block; color: var(--accent); }
+.landing-body p {
+  font-size: var(--step-1);
+  color: var(--ink-soft);
+  margin: 0 0 1.75rem;
+  max-width: 34ch;
+}
+.landing-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.landing-actions .btn-secondary { background: rgba(255, 255, 255, .85); }
+
+/* Three cards that ride up over the bottom edge of the photo. */
+.feature-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: -3.25rem clamp(1rem, 3vw, 2rem) 0;
+}
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.25rem;
+}
+.feature-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  background: var(--shallow);
+  color: var(--accent);
+  font-size: 1.4rem;
+}
+.feature h2 { font-size: var(--step-0); font-weight: 700; margin: 0 0 .15rem; }
+.feature p { font-size: var(--step--1); color: var(--sound); margin: 0; }
+
+.landing-tagline {
+  text-align: center;
+  font-style: italic;
+  font-size: var(--step-2);
+  color: var(--ink-soft);
+  margin: 3rem 0 0;
+}
+.landing-tagline::after {
+  content: "";
+  display: block;
+  width: 4rem;
+  height: 2px;
+  margin: .75rem auto 0;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Sign-in card: the "Welcome back" panel, minus the password it never had
+   -------------------------------------------------------------------------- */
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+}
+.auth-card .auth-head { text-align: center; margin-bottom: 1.5rem; }
+.auth-card .auth-head .brand-mark { display: inline-block; color: var(--ink); margin-bottom: .5rem; }
+.auth-card .auth-head .brand-name {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+}
+.auth-card .auth-head .brand-name span { color: var(--accent); }
+.auth-card .auth-head h1 { margin: 0 0 .35rem; }
+.auth-card .auth-head p { color: var(--sound); margin: 0; font-size: var(--step--1); }
+.auth-card .auth-foot {
+  text-align: center;
+  font-size: var(--step--1);
+  color: var(--sound);
+  margin: 1.25rem 0 0;
+}
+.auth-card .auth-foot a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.auth-card .auth-foot a:hover { text-decoration: underline; }
+
+@media (max-width: 767.98px) {
+  .landing-hero .landing-scrim {
+    background: linear-gradient(180deg, rgba(255, 255, 255, .92) 0%, rgba(255, 255, 255, .78) 55%, rgba(255, 255, 255, .25) 100%);
+  }
+  .feature-row { grid-template-columns: 1fr; margin: -2.5rem .75rem 0; }
+}
 
 /* --------------------------------------------------------------------------
    Motion + responsive
@@ -1084,7 +1241,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   .page { padding: 1.25rem 1rem 3rem; }
   .content-section { padding: 1.1rem; }
   .soundings { gap: 0 1.25rem; }
-  .site-header .navbar-nav .nav-link.is-current { box-shadow: inset 2px 0 0 var(--magenta); }
+  .site-header .navbar-nav .nav-link.nav-cta { margin: .35rem 0 0; text-align: center; }
   .seed-notice { align-items: flex-start; }
   .harbours { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 }

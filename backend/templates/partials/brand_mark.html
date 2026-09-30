@@ -1,0 +1,13 @@
+{# The logo: a motor yacht running right over two blue wakes. Navy parts take
+   currentColor so the mark follows whatever it sits in; the wakes are always
+   the accent blue. Pass `mark_size` to scale it (default is the navbar's). #}
+{% set w = mark_size or 38 %}
+<span class="brand-mark" aria-hidden="true">
+  <svg width="{{ w }}" height="{{ (w * 26 / 44)|round|int }}" viewBox="0 0 44 26" fill="none">
+    <path d="M13 10.2 L17.6 4.6 C18.1 4 18.8 3.7 19.6 3.7 L29.4 3.7 L35.2 9.4 Z" fill="currentColor"/>
+    <path d="M19.2 5.4 L27.9 5.4 L31 8.4 L16.9 9.1 Z" fill="#fff" opacity=".9"/>
+    <path d="M3 12.6 L42 8.8 C39.6 14.6 35.4 17.6 28.6 17.9 L7.2 17.9 C5.2 17.9 3.6 15.6 3 12.6 Z" fill="currentColor"/>
+    <path d="M1 21.2 C7.5 18.6 14.5 22.8 22 20.6 S35.5 18.4 43 20" stroke="#1667b7" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M9 24.4 C14.5 22.6 20 25.2 26 23.8 S34.5 22.4 38 23.4" stroke="#1667b7" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+  </svg>
+</span>

@@ -7,31 +7,17 @@
     {% if hero_slides %}
       {# Only the first frame gets a src; the script attaches the rest one step
          ahead of the rotation. Loading all six up front cost ~1.5MB before the
-         first fade. The bundled photo is skipped entirely here — it is 3.4MB,
-         far heavier than any fetched frame, and only earns its place offline. #}
+         first fade. The bundled photo is only the offline fallback. #}
       {% for url, place in hero_slides %}
         <img class="hero-photo {{ 'is-showing' if loop.first }}" alt=""
              {% if loop.first %}src="{{ url }}"{% endif %}
              data-src="{{ url }}" data-place="{{ place }}">
       {% endfor %}
     {% else %}
-      <img class="hero-photo is-showing" src="{{ url_for('static', filename='img/login_pic.jpg') }}" alt="">
+      <img class="hero-photo is-showing" src="{{ url_for('static', filename='img/hero.jpg') }}" alt="">
     {% endif %}
   </div>
   <div class="hero-scrim"></div>
-
-  {# Isobaths: the depth contours a chart draws around a coastline. Purely
-     atmospheric, so it is hidden from assistive tech. #}
-  <svg class="isobaths" viewBox="0 0 1200 420" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-    <g fill="none" stroke="#7fc4cc" stroke-width="1">
-      <path d="M-40 330 C 180 300, 320 366, 520 336 S 900 268, 1240 316"/>
-      <path d="M-40 286 C 200 254, 330 322, 540 288 S 920 218, 1240 270" opacity=".8"/>
-      <path d="M-40 242 C 220 208, 340 278, 560 240 S 940 168, 1240 224" opacity=".62"/>
-      <path d="M-40 198 C 240 162, 350 234, 580 192 S 960 118, 1240 178" opacity=".46"/>
-      <path d="M-40 154 C 260 116, 360 190, 600 144 S 980 68, 1240 132" opacity=".32"/>
-      <path d="M-40 110 C 280 70, 370 146, 620 96 S 1000 18, 1240 86" opacity=".2"/>
-    </g>
-  </svg>
 
   <div class="hero-body">
     <p class="eyebrow">Welcome aboard, {{ client["FirstName"] }}</p>

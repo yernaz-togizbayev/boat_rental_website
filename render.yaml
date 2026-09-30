@@ -23,9 +23,9 @@ services:
     startCommand: >-
       gunicorn --chdir backend --bind 0.0.0.0:$PORT
       --workers 2 --threads 4 --timeout 60 --access-logfile - app:app
-    # Not "/": that redirects to /login, which runs Client.query.all() and would
-    # fail the deploy whenever the free database is briefly asleep. /credits is
-    # template-only -- no database, no network.
+    # Not "/login": that runs Client.query.all() and would fail the deploy
+    # whenever the free database is briefly asleep. /credits (like the "/"
+    # landing page) is template-only -- no database, no network.
     healthCheckPath: /credits
     envVars:
       - key: PYTHON_VERSION

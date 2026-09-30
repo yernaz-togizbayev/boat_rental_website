@@ -9,27 +9,18 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}" />
     <title>{% block head %}Boat Rental Company{% endblock %}</title>
   </head>
   <body>
     <header class="site-header">
-      <nav class="navbar navbar-expand-lg navbar-dark">
+      <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-          <a class="navbar-brand chart-brand" href="{{ url_for('index') }}">
-            {# Compass rose: the one mark, in chart magenta. #}
-            <span class="rose" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.2" opacity=".45"/>
-                <path d="M10 1.2 L11.7 8.3 L10 10 L8.3 8.3 Z" fill="currentColor"/>
-                <path d="M10 18.8 L8.3 11.7 L10 10 L11.7 11.7 Z" fill="currentColor" opacity=".5"/>
-                <path d="M18.8 10 L11.7 11.7 L10 10 L11.7 8.3 Z" fill="currentColor" opacity=".5"/>
-                <path d="M1.2 10 L8.3 8.3 L10 10 L8.3 11.7 Z" fill="currentColor" opacity=".5"/>
-              </svg>
-            </span>
-            Boat Rental
+          <a class="navbar-brand brand" href="{{ url_for('index') }}">
+            {% include "partials/brand_mark.html" %}
+            <span>Boat Rental <span class="brand-accent">Company</span></span>
           </a>
 
           <button class="navbar-toggler" type="button"
@@ -53,7 +44,7 @@
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'report' }}" href="{{ url_for('report') }}">My rentals</a>
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'analytics' }}" href="{{ url_for('analytics') }}">Availability</a>
               {% else %}
-                <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'login' }}" href="{{ url_for('login') }}">Sign in</a>
+                <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'index' }}" href="{{ url_for('index') }}">Home</a>
                 <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'register_client' }}" href="{{ url_for('register_client') }}">Register</a>
               {% endif %}
               {% block navbar %}{% endblock %}
@@ -68,7 +59,8 @@
                 <span class="nav-item nav-role">{{ session.client.FirstName }}</span>
                 <a class="nav-item nav-link" href="{{ url_for('logout') }}">Sign out</a>
               {% else %}
-                <a class="nav-item nav-link" href="{{ url_for('manager_login') }}">Manager access</a>
+                <a class="nav-item nav-link {{ 'is-current' if request.endpoint == 'manager_login' }}" href="{{ url_for('manager_login') }}">Manager access</a>
+                <a class="nav-item nav-link nav-cta" href="{{ url_for('login') }}">Sign in</a>
               {% endif %}
             </div>
           </div>
@@ -79,7 +71,9 @@
     <main role="main" class="page">
       {# Always available, not once per session: generate_data() keeps the
          offices now, so running it again refills the fleet instead of
-         destroying every city a manager added. #}
+         destroying every city a manager added. The landing page blanks the
+         block; the sign-in page one click away still carries it. #}
+      {% block seed_notice %}
       <div class="seed-notice rise">
         <p>
           <strong>Demo data</strong>
@@ -94,6 +88,7 @@
           </button>
         </form>
       </div>
+      {% endblock %}
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
