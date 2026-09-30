@@ -33,6 +33,7 @@ services:
       - key: SECRET_KEY
         generateValue: true        # never the "dev" fallback on a public host
       - key: DATABASE_URL
+        # TiDB Cloud Starter (docs/DEPLOYMENT.md, step 1).
         # Paste in the dashboard; never commit it. TLS goes in this URL too --
         # SQLAlchemy reads ssl_ca / ssl_cert / ssl_key / ssl_check_hostname
         # straight out of the query string, so it needs no code.

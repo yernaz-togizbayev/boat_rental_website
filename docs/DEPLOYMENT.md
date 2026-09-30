@@ -22,38 +22,47 @@ runtime puts an interactive Werkzeug traceback on the open internet. `render.yam
 Render's managed database is **PostgreSQL only**, so MySQL comes from elsewhere. Porting the
 schema to Postgres is not an option: `database/Group05_Createtable.sql` is a graded artifact.
 
-[Aiven for MySQL](https://aiven.io/) has a genuine free plan, needs no credit card, and is real
-MySQL rather than a wire-compatible substitute. Alwaysdata's free 100 MB MySQL also works — this
-dataset is under 1 MB. Avoid db4free and freesqldatabase; a submitted demo URL that 500s is worse
-than no demo.
+Use **[TiDB Cloud Starter](https://tidbcloud.com/)** (formerly "Serverless"). It speaks the MySQL
+wire protocol and dialect, is free with no credit card, and — the reason it is here — it
+**scales to zero and wakes itself** on the next connection. An idle night costs a few seconds on
+the first request, not an outage.
 
-**Pick MySQL, not PostgreSQL.** Aiven's free tier offers both, and it is an easy mis-click. This
-app is `mysql+pymysql` end to end and the schema is a graded MySQL artifact, so Postgres would
-mean porting `Group05_Createtable.sql` — which is exactly what must not happen.
+This used to say Aiven. Aiven's free plan *powers the service off* after a period of inactivity
+and it stays off until someone logs in to the console and starts it again, which took the whole
+site down whenever nobody had visited for a while. Supabase's free tier pauses the same way.
+Avoid db4free and freesqldatabase too; a demo URL that 500s is worse than no demo.
 
-Take the connection details and build a URL:
+**Create the cluster:** sign up, create a *Starter* cluster, pick the AWS **Frankfurt
+(eu-central-1)** region to sit next to the Render service, and leave the spending limit at 0 so it
+can never bill. Under **Connect**, generate a password and note host, port (`4000`) and user.
+The user carries a cluster prefix, e.g. `3xAmPlE.root` — that dot is part of the name.
+
+**Create the database** with a case-insensitive collation. TiDB defaults `utf8mb4` to
+`utf8mb4_bin`, which is case-sensitive and sorts `Zadar` before `a…`; MariaDB locally does
+neither, so match it explicitly (in TiDB's web *SQL Editor*, or with the client from step 2):
+
+```sql
+CREATE DATABASE boatdb CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+```
+
+Then build a URL:
 
 ```
-mysql+pymysql://USER:PASSWORD@HOST:PORT/DBNAME?charset=utf8mb4
+mysql+pymysql://USER:PASSWORD@HOST:4000/boatdb?charset=utf8mb4&ssl_ca=/etc/ssl/certs/ca-certificates.crt
 ```
 
 `?charset=utf8mb4` is not optional — the seed data contains `Radića` and a zero-width space in
-`'Tourlos Marina'`, and a provider defaulting to `latin1` will mangle both.
+`'Tourlos Marina'`, and a client defaulting to `latin1` will mangle both.
 
-**TLS goes in the same URL.** Managed MySQL requires it, and SQLAlchemy reads `ssl_ca`,
+**TLS goes in the same URL.** TiDB Cloud refuses plaintext connections. SQLAlchemy reads `ssl_ca`,
 `ssl_cert`, `ssl_key`, `ssl_capath`, `ssl_cipher` and `ssl_check_hostname` straight out of the
-query string and hands them to PyMySQL — so no application code is involved. With the provider's
-CA file:
+query string and hands them to PyMySQL, which then verifies both the certificate and the
+hostname — so no application code is involved. TiDB's certificate chains to a public root, so
+the operating system's CA bundle is enough; `/etc/ssl/certs/ca-certificates.crt` exists on
+Render's Python runtime and on Debian/Ubuntu. No Secret File to upload.
 
-```
-mysql+pymysql://USER:PASSWORD@HOST:PORT/DBNAME?charset=utf8mb4&ssl_ca=/etc/secrets/ca.pem
-```
-
-On Render, upload the CA as a Secret File (it lands in `/etc/secrets/`) and point `ssl_ca` at it.
-
-The database name comes from the provider (Aiven calls it `defaultdb`). That is fine:
 `Group05_Createtable.sql` has its `CREATE DATABASE` and `USE` lines commented out, so the schema
-drops into whatever database the URL selects. **Do not uncomment them.**
+drops into whatever database the URL or client selects. **Do not uncomment them.**
 
 ## 2. Load the schema — once, from your machine
 
@@ -62,20 +71,16 @@ handles these files natively, comments and all, so there is nothing to install i
 nothing to parse.
 
 There is no `mysql` binary on a typical Windows box, but the official image has one. Use the
-**`mysql:8`** client against a cloud provider, not `mariadb`: Aiven runs MySQL 8, whose default
-`caching_sha2_password` auth plugin the MariaDB client cannot always negotiate.
+**`mysql:8`** client against a cloud provider, not `mariadb`: the MariaDB client's TLS and auth
+negotiation with managed MySQL-compatible services is unreliable, while the Oracle client just
+works.
 
 ```bash
 cd /path/to/boat_rental_webapp
 
-for f in database/Group05_Createtable.sql \
-         database/Student1/Student1_InsertData_Initial.sql \
-         database/Student1/Student1_InsertData_Harbours.sql \
-         database/Student2/Student2_InsertData_Initial.sql; do
+for f in database/Group05_Createtable.sql          database/Student1/Student1_InsertData_Initial.sql          database/Student1/Student1_InsertData_Harbours.sql          database/Student2/Student2_InsertData_Initial.sql; do
   echo "-> $f"
-  docker run --rm -i mysql:8 mysql \
-    -h HOST -P PORT -u avnadmin -pPASSWORD \
-    --ssl-mode=REQUIRED defaultdb < "$f"
+  docker run --rm -i mysql:8 mysql     -h HOST -P 4000 -u 'PREFIX.root' -p'PASSWORD'     --ssl-mode=REQUIRED --default-character-set=utf8mb4 boatdb < "$f"
 done
 ```
 
@@ -87,14 +92,12 @@ Student2. That order is what `database/init.sql` declares — but do not run `in
 its `SOURCE` paths point inside the MariaDB container and will not resolve here.
 
 The seeds are plain `INSERT`s, so this is a **one-time** load: running it twice fails on duplicate
-keys. To start over, drop the tables and repeat.
+keys. To start over, `DROP DATABASE boatdb`, recreate it as above and repeat.
 
 Verify:
 
 ```bash
-docker run --rm -i mysql:8 mysql -h HOST -P PORT -u avnadmin -pPASSWORD \
-  --ssl-mode=REQUIRED defaultdb \
-  -e "SELECT COUNT(*) FROM Office; SELECT COUNT(*) FROM Boat;"
+docker run --rm -i mysql:8 mysql -h HOST -P 4000 -u 'PREFIX.root' -p'PASSWORD'   --ssl-mode=REQUIRED boatdb   -e "SELECT COUNT(*) FROM Office; SELECT COUNT(*) FROM Boat;"
 ```
 
 Twenty offices and six boats means it worked.
@@ -121,8 +124,14 @@ the client logbook and every manager page are unaffected — Mongo is a read-sid
 the system of record. Add a MongoDB Atlas free URI as `MONGO_URI` to light those three pages up.
 
 **Cold starts.** Render's free instance sleeps after ~15 minutes and takes about a minute to
-wake; a free database may idle off too. First load after a quiet spell is slow. Worth saying out
-loud if you are handing the link to someone who will judge it.
+wake; TiDB Starter also scales to zero, but resumes on its own within seconds of the first
+connection (gunicorn's `--timeout 60` covers both). Nothing needs a manual restart — the first load
+after a quiet spell is just slow.
+
+To skip even that, point a free uptime pinger (cron-job.org, UptimeRobot) at `/credits` every
+10 minutes. That keeps the Render instance awake; one service running around the clock fits in
+the free plan's monthly instance hours. `/credits` deliberately does not touch the database, so
+TiDB still idles down and wakes on real traffic.
 
 **`IMAGE_FETCH=off`** means harbour cards fall back to the built-in pool instead of fetching
 photos. Turn it on if the site looks bare and you are willing to spend the request latency.
@@ -143,7 +152,7 @@ another site, and it is self-healing by design — pressing it again refills eve
 
 ## 6. Verifying a deployment
 
-1. `/credits` — the health check target; no database, so it answers even if MySQL is asleep.
+1. `/credits` — the health check target; no database, so it answers even while TiDB is scaled to zero.
 2. `/login` — lists clients, which proves the seed data is really there.
 3. Sign in, search a harbour, book a boat, pay with `4242 4242 4242 4242`.
 4. `/manager/login` → `/manager/boats` for the manager side.
