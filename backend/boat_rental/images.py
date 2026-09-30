@@ -5,8 +5,9 @@ search, the Wikipedia lead image, then a generic harbour from a small pool. The
 hand-picked ones exist because a search for a small town tends to return a flag
 or a map rather than a coastline.
 
-Everything is hotlinked. IMAGE_FETCH=off skips the lookups entirely, which is
-what lets the smoke test run offline.
+Everything is hotlinked. IMAGE_FETCH=off skips the two live lookups, which
+block the request; the hand-picked photos and the generic pool still render,
+since only the visitor's browser ever fetches those.
 """
 
 import json
@@ -323,9 +324,9 @@ def hero_slides():
 
     Sampled per render rather than fixed, so the pool is worth its size: a
     returning visitor sees a different coastline instead of the same six.
+    Not gated by IMAGE_FETCH: these are hotlinks the browser fetches, so they
+    cost the server nothing.
     """
-    if not _enabled():
-        return []
     return random.sample(HERO_IMAGES, min(HERO_SLIDE_COUNT, len(HERO_IMAGES)))
 
 
@@ -334,14 +335,12 @@ def city_and_boat_images(cities, width=600):
 
     Returns (city_url_by_city, image_url_by_boat_type). Every city gets a URL:
     the hand-picked one if we have it, else a looked-up photo of that city, else
-    a generic harbour. IMAGE_FETCH=off skips all of it, which is what makes the
-    page work offline: a hotlinked CDN image is a network call like any other.
+    a generic harbour. IMAGE_FETCH=off skips only the lookups, the one part that
+    blocks the request; the hotlinks are the browser's business, not ours.
     """
-    if not _enabled():
-        return {}, {}
-
     unknown = [c for c in cities if c not in CITY_IMAGES]
-    looked_up = _resolve_unknown_cities(unknown, width) if unknown else {}
+    looked_up = (_resolve_unknown_cities(unknown, width)
+                 if unknown and _enabled() else {})
 
     city_urls = {
         c: CITY_IMAGES.get(c) or looked_up.get(c) or _generic_city_image(c)

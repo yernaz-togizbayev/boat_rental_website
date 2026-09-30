@@ -133,8 +133,10 @@ To skip even that, point a free uptime pinger (cron-job.org, UptimeRobot) at `/c
 the free plan's monthly instance hours. `/credits` deliberately does not touch the database, so
 TiDB still idles down and wakes on real traffic.
 
-**`IMAGE_FETCH=off`** means harbour cards fall back to the built-in pool instead of fetching
-photos. Turn it on if the site looks bare and you are willing to spend the request latency.
+**`IMAGE_FETCH=off`** skips only the live Unsplash/Wikipedia lookups for harbours that have no
+hand-picked photo; those cards fall back to the built-in pool. The hero rotation, hand-picked
+harbour photos and boat photos are plain hotlinks loaded by the browser, so they always show.
+Turn it on if you want city-specific photos for new harbours and can spend the request latency.
 
 ## 5. Security notes
 
