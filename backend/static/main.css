@@ -913,7 +913,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
    about .85. */
 .chart-hero .hero-photo.is-showing { opacity: .8; }
 
-.chart-hero .hero-place {
+.hero-place {
   position: absolute;
   right: clamp(1rem, 3vw, 2rem);
   bottom: clamp(1rem, 3vw, 1.75rem);
@@ -928,7 +928,7 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   color: #e2eff4;
   text-shadow: 0 1px 3px rgba(12, 35, 64, .85);
 }
-.chart-hero .hero-place:not(:empty)::before {
+.hero-place:not(:empty)::before {
   content: "";
   display: inline-block;
   width: 14px;
@@ -1086,14 +1086,32 @@ input[type="date"].form-control { font-family: var(--mono); font-size: var(--ste
   background: var(--shallow);
   box-shadow: var(--shadow-lg);
 }
-.landing-hero .landing-photo {
+.landing-hero .hero-frames {
   position: absolute;
   inset: 0;
   z-index: -2;
+}
+/* Same crossfade as the signed-in hero, but at full strength: the white wash
+   on the left carries the legibility here, not a dimmed photo. */
+.landing-hero .landing-photo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: 72% 60%;
+  opacity: 0;
+  transition: opacity 1.4s ease-in-out;
+}
+.landing-hero .landing-photo.is-showing { opacity: 1; }
+/* Top, not bottom: the feature cards ride up over the bottom edge. Up there
+   it usually sits on bright sky, so it flips to navy on a white halo. */
+.landing-hero .hero-place {
+  bottom: auto;
+  top: clamp(1rem, 3vw, 1.75rem);
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 2px rgba(255, 255, 255, .9);
 }
 .landing-hero .landing-scrim {
   position: absolute;

@@ -3,20 +3,7 @@
 {% block body %}
 {% set PORTS_SHOWN = 8 %}
 <section class="chart-hero rise">
-  <div class="hero-frames" aria-hidden="true">
-    {% if hero_slides %}
-      {# Only the first frame gets a src; the script attaches the rest one step
-         ahead of the rotation. Loading all six up front cost ~1.5MB before the
-         first fade. The bundled photo is only the offline fallback. #}
-      {% for url, place in hero_slides %}
-        <img class="hero-photo {{ 'is-showing' if loop.first }}" alt=""
-             {% if loop.first %}src="{{ url }}"{% endif %}
-             data-src="{{ url }}" data-place="{{ place }}">
-      {% endfor %}
-    {% else %}
-      <img class="hero-photo is-showing" src="{{ url_for('static', filename='img/hero.jpg') }}" alt="">
-    {% endif %}
-  </div>
+  {% include "partials/hero_frames.html" %}
   <div class="hero-scrim"></div>
 
   <div class="hero-body">
@@ -42,46 +29,5 @@
     </div>
     {% endif %}
   </div>
-
-  {% if hero_slides %}
-  {# Names the anchorage currently on screen, so the rotation says something
-     instead of just moving. #}
-  <p class="hero-place" id="hero-place" aria-live="off"></p>
-  {% endif %}
 </section>
-
-{% if hero_slides %}
-<script>
-  (function () {
-    var frames = Array.prototype.slice.call(document.querySelectorAll('.hero-photo'));
-    var caption = document.getElementById('hero-place');
-    if (caption && frames.length) caption.textContent = frames[0].dataset.place || '';
-    if (frames.length < 2) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    var i = 0;
-
-    function attach(index) {
-      var frame = frames[index % frames.length];
-      if (frame && frame.dataset.src && !frame.getAttribute('src')) {
-        frame.src = frame.dataset.src;
-      }
-    }
-
-    function show(next) {
-      frames[i].classList.remove('is-showing');
-      frames[next].classList.add('is-showing');
-      i = next;
-      if (caption) caption.textContent = frames[i].dataset.place || '';
-      attach(i + 1);
-    }
-
-    attach(1);
-    setInterval(function () {
-      if (document.hidden) return;
-      show((i + 1) % frames.length);
-    }, 3000);
-  })();
-</script>
-{% endif %}
 {% endblock %}

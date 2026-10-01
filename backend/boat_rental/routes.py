@@ -109,7 +109,7 @@ def index():
     """
     if "client" in session or "manager" in session:
         return redirect(url_for("home"))
-    return render_template("landing.html")
+    return render_template("landing.html", hero_slides=images.hero_slides())
 
 
 @app.route("/login")

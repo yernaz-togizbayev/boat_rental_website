@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
 {# The public front door. Deliberately touches no database, so it still
-   renders while a free-tier database is waking up. #}
+   renders while a free-tier database is waking up. The rotating photos are
+   hotlinks from images.py, not a query, so they keep that promise. #}
 {% block seed_notice %}{% endblock %}
 
 {% block body %}
 <section class="landing-hero rise">
-  <img class="landing-photo" src="{{ url_for('static', filename='img/hero.jpg') }}" alt="">
+  {% with photo_class = "landing-photo" %}{% include "partials/hero_frames.html" %}{% endwith %}
   <div class="landing-scrim"></div>
 
   <div class="landing-body">
